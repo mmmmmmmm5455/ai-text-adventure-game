@@ -45,6 +45,8 @@ export PYTHONPATH=$PWD
 
 浏览器访问终端提示的地址（默认 `http://localhost:8501`）。
 
+**中文逐步教程（如何打开游戏、Docker、常见问题）：** 见 **`docs/TUTORIAL_CN.md`**。
+
 ## 测试与 CI
 
 ```bash
@@ -52,7 +54,19 @@ pip install -r requirements-dev.txt
 python -m pytest tests -q
 ```
 
+- **默认测试不依赖 Ollama**；契约测试在 `tests/contracts/`（`TextGenerationPort` 与 `LLMClient`）。
+- **可选真实 LLM 集成**：`set RUN_LLM_INTEGRATION=1` 后运行 `tests/integration/`。
+- 工程政策（作品集 / Docker / 存档领域版本）：见 **`docs/ARCHITECTURE_POLICY.md`**。
+
 推送到 GitHub 后，`.github/workflows/ci.yml` 会在 `main`/`master` 的推送与 PR 上运行相同测试（Python 3.11、3.12）。在仓库 **Settings → Actions** 中启用 Actions 即可。
+
+## Docker
+
+```bash
+docker compose up --build
+```
+
+浏览器访问 `http://localhost:8501`。Ollama 建议在**宿主机**运行，容器内已通过 `OLLAMA_BASE_URL=http://host.docker.internal:11434` 指向宿主（Docker Desktop Windows/Mac）。Linux 宿主请改为实际网关 IP 或使用 `network_mode: host` 等方案，详见 `docs/ARCHITECTURE_POLICY.md`。
 
 ## 目录结构
 

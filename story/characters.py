@@ -15,6 +15,14 @@ class NPCProfile:
     personality: str
     background: str
     topics: tuple[str, ...]
+    # 语气偏敌视、易被挑衅；对话提示里会加强冲突感
+    hostile: bool = False
+    # 威慑检定：玩家 (力量+魅力+1~8) 需 ≥ 此值才可能勒索到金币
+    intimidate_resistance: int = 12
+    # 单次威慑成功时金币上限（实际随机）
+    max_intimidate_payout: int = 22
+    # 1–10：性格上是否愿意在对话里给「小额」施舍/打赏（仍受系统概率与上限约束）
+    generosity: int = 5
 
 
 NPCS: dict[str, NPCProfile] = {
@@ -25,6 +33,10 @@ NPCS: dict[str, NPCProfile] = {
         personality="沉稳、忧虑、愿意托付重任",
         background="见证过多次灾厄，相信预言与集体记忆。",
         topics=("森林异象", "村庄历史", "封印"),
+        hostile=False,
+        intimidate_resistance=20,
+        max_intimidate_payout=8,
+        generosity=6,
     ),
     "merchant": NPCProfile(
         npc_id="merchant",
@@ -33,6 +45,10 @@ NPCS: dict[str, NPCProfile] = {
         personality="精明、健谈、重利也重人情",
         background="商队在森林边失踪过货物，对迷雾心存忌惮。",
         topics=("贸易路线", "失踪货物", "情报"),
+        hostile=False,
+        intimidate_resistance=17,
+        max_intimidate_payout=35,
+        generosity=7,
     ),
     "hermit": NPCProfile(
         npc_id="hermit",
@@ -41,6 +57,10 @@ NPCS: dict[str, NPCProfile] = {
         personality="孤僻、洞察、说话绕弯",
         background="曾深入洞穴研究符文，知晓部分真相。",
         topics=("符文", "洞穴", "内心试炼"),
+        hostile=True,
+        intimidate_resistance=15,
+        max_intimidate_payout=15,
+        generosity=3,
     ),
     "miner": NPCProfile(
         npc_id="miner",
@@ -49,6 +69,10 @@ NPCS: dict[str, NPCProfile] = {
         personality="豪爽、疲惫、务实",
         background="在山脉与遗迹间往返，弄丢过工具，也见过怪异光影。",
         topics=("矿脉", "工具", "遗迹通道"),
+        hostile=False,
+        intimidate_resistance=13,
+        max_intimidate_payout=18,
+        generosity=6,
     ),
     "innkeeper": NPCProfile(
         npc_id="innkeeper",
@@ -57,14 +81,22 @@ NPCS: dict[str, NPCProfile] = {
         personality="热情、八卦、善于倾听",
         background="听过无数旅人的故事，能拼凑传闻。",
         topics=("旅人传闻", "补给", "休息"),
+        hostile=False,
+        intimidate_resistance=11,
+        max_intimidate_payout=20,
+        generosity=8,
     ),
     "guard": NPCProfile(
         npc_id="guard",
         name="守卫雷恩",
         role="村庄守卫",
-        personality="警惕、正直、略带幽默",
-        background="负责巡逻广场与森林边缘，压力巨大。",
+        personality="警惕、强硬、对可疑外人不客气",
+        background="负责巡逻广场与森林边缘，压力巨大，见过浑水摸鱼的人。",
         topics=("巡逻", "治安", "武器"),
+        hostile=True,
+        intimidate_resistance=18,
+        max_intimidate_payout=12,
+        generosity=3,
     ),
 }
 

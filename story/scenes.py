@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from core.narrative_language import get_narrative_language
+
 
 @dataclass(frozen=True)
 class Scene:
@@ -63,3 +65,42 @@ SCENES: dict[str, Scene] = {
 
 def get_scene(scene_id: str) -> Scene | None:
     return SCENES.get(scene_id)
+
+
+_SCENE_NAME_EN: dict[str, str] = {
+    "village_square": "Village Square",
+    "misty_forest": "Misty Forest",
+    "ancient_mountains": "Ancient Mountains",
+    "mountain_foot": "Mountain Foot",
+    "tavern": "Foothill Tavern",
+    "mysterious_cave": "Mysterious Cave",
+    "underground_ruins": "Underground Ruins",
+}
+
+_SCENE_DESC_EN: dict[str, str] = {
+    "village_square": "A stone square with an old well at its center; villagers speak in low voices.",
+    "misty_forest": "Mist drifts between treetops and an unnatural hum pulses in the distance.",
+    "ancient_mountains": "Steep paths and weathered cliffs; miners' camps dot the windy heights.",
+    "mountain_foot": "A gentle slope between village and mountains, marked by caravan wheel tracks.",
+    "tavern": "Warm firelight and ale scent; travelers trade rumors and routes here.",
+    "mysterious_cave": "Blurred runes mark the entrance, and a cold breath spills from within.",
+    "underground_ruins": "Collapsed corridors and old mechanisms hide seals and truth in the depths.",
+}
+
+
+def scene_name(scene_id: str) -> str:
+    s = get_scene(scene_id)
+    if not s:
+        return "Unknown place" if get_narrative_language() == "en" else "未知之地"
+    if get_narrative_language() == "en":
+        return _SCENE_NAME_EN.get(scene_id, s.name)
+    return s.name
+
+
+def scene_description(scene_id: str) -> str:
+    s = get_scene(scene_id)
+    if not s:
+        return ""
+    if get_narrative_language() == "en":
+        return _SCENE_DESC_EN.get(scene_id, s.description)
+    return s.description

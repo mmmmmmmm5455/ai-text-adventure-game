@@ -76,6 +76,9 @@ class QuestBook:
     def get(self, quest_id: str) -> Quest | None:
         return self._quests.get(quest_id)
 
+    def remove(self, quest_id: str) -> None:
+        self._quests.pop(quest_id, None)
+
     def all_quests(self) -> list[Quest]:
         return list(self._quests.values())
 

@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from core.i18n import t
+from core.narrative_language import get_narrative_language
 from game.constants import MAX_INVENTORY_SLOTS
 from game.inventory import Inventory, InventoryItem, ItemCategory
 
@@ -50,6 +52,7 @@ class Player:
 
     name: str
     profession: Profession
+    gender: str = "未指定"
     level: int = 1
     xp: int = 0
     gold: int = 10
@@ -69,12 +72,14 @@ class Player:
     skills: list[str] = field(default_factory=list)
 
     @staticmethod
-    def create(name: str, profession: Profession) -> "Player":
+    def create(name: str, profession: Profession, gender: str = "未指定") -> "Player":
         """按职业创建角色并初始化属性。"""
+        gn = (gender or "未指定").strip()[:32] or "未指定"
         base = _PROFESSION_BASE[profession]
         p = Player(
             name=name.strip()[:32],
             profession=profession,
+            gender=gn,
             hp=base["hp"],
             max_hp=base["hp"],
             mp=base["mp"],
@@ -97,7 +102,7 @@ class Player:
         while self.xp >= xp_for_next_level(self.level):
             self.xp -= xp_for_next_level(self.level)
             self._level_up()
-            msgs.append(f"升级至 {self.level} 级！")
+            msgs.append(t("player.level_up", level=self.level))
         return msgs
 
     def _level_up(self) -> None:
@@ -121,21 +126,53 @@ class Player:
     def restore_mp(self, amount: int) -> None:
         self.mp = min(self.max_mp, self.mp + max(0, amount))
 
+    def visible_equipment_for_npc(self) -> str:
+        """
+        仅描述「外露装备」供 NPC 对话使用：已装备的武器/护甲名称。
+        不包含背包其它物品，避免模型编造玩家持有物。
+        """
+        from story.items import catalog as item_catalog
+
+        cat = item_catalog()
+        parts: list[str] = []
+
+        def _name_for(eq_id: str | None) -> str | None:
+            if not eq_id:
+                return None
+            if eq_id in cat:
+                return cat[eq_id].name
+            for it in self.inventory.items:
+                if it.item_id == eq_id:
+                    return it.name
+            return eq_id
+
+        wn = _name_for(self.equipped_weapon_id)
+        an = _name_for(self.equipped_armor_id)
+        if wn:
+            parts.append(t("player.visible_weapon", name=wn))
+        if an:
+            parts.append(t("player.visible_armor", name=an))
+        if not parts:
+            return t("player.visible_none")
+        sep = "; " if get_narrative_language() == "en" else "；"
+        return t("player.visible_summary", parts=sep.join(parts))
+
     def use_consumable(self, item_id: str) -> str | None:
         """使用消耗品；成功返回 None，失败返回原因。"""
         if not self.inventory.has_item(item_id, 1):
-            return "背包中没有该物品。"
+            return t("player.err.no_item")
         # 简单规则：治疗药水恢复生命
         if item_id == "healing_potion":
             self.heal(35)
             self.inventory.remove_item(item_id, 1)
             return None
-        return "该物品无法直接使用。"
+        return t("player.err.cannot_use")
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "profession": self.profession.value,
+            "gender": self.gender,
             "level": self.level,
             "xp": self.xp,
             "gold": self.gold,
@@ -158,6 +195,7 @@ class Player:
         p = Player(
             name=data["name"],
             profession=Profession(data["profession"]),
+            gender=str(data.get("gender", "未指定")).strip()[:32] or "未指定",
             level=int(data.get("level", 1)),
             xp=int(data.get("xp", 0)),
             gold=int(data.get("gold", 0)),

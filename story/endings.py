@@ -7,6 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
+from core.i18n import t
 from game.game_state import GameState
 
 
@@ -35,35 +36,35 @@ def decide_ending(state: GameState) -> EndingInfo:
     if "village_fallen" in tags or (not state.player or not state.player.is_alive()):
         return EndingInfo(
             EndingId.TRAGEDY,
-            "悲剧结局",
-            "村庄的灯火在雾中熄灭，你的故事以遗憾收场。",
+            t("ending.title.tragedy"),
+            t("ending.summary.tragedy"),
         )
     if main_done and "hero_path" in tags:
         return EndingInfo(
             EndingId.HERO,
-            "英雄结局",
-            "你驱散了洞穴深处的阴影，村民在广场上为你欢呼。",
+            t("ending.title.hero"),
+            t("ending.summary.hero"),
         )
     if "hermit_path" in tags:
         return EndingInfo(
             EndingId.HERMIT,
-            "隐居结局",
-            "你选择在森林深处结庐，把时间交给风声与书卷。",
+            t("ending.title.hermit"),
+            t("ending.summary.hermit"),
         )
     if state.player and state.player.gold >= 200 and "wealth_focus" in tags:
         return EndingInfo(
             EndingId.MERCHANT,
-            "富商结局",
-            "财富在你手中累积，商路与契约成为你新的冒险。",
+            t("ending.title.merchant"),
+            t("ending.summary.merchant"),
         )
     if main_done:
         return EndingInfo(
             EndingId.TRAVEL,
-            "远行结局",
-            "真相已明，你背起行囊，把宁静村庄留在身后，走向更广阔的世界。",
+            t("ending.title.travel"),
+            t("ending.summary.travel_main_done"),
         )
     return EndingInfo(
         EndingId.TRAVEL,
-        "远行结局",
-        "旅程尚未写下终章，前路仍在你脚下延展。",
+        t("ending.title.travel"),
+        t("ending.summary.travel_default"),
     )

@@ -1,0 +1,13 @@
+services:
+  adventure:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      # 宿主 Ollama（Windows/Mac Docker Desktop）
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      OLLAMA_MODEL: llama3
+      OLLAMA_EMBED_MODEL: nomic-embed-text
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped

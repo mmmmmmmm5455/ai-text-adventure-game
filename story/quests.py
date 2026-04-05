@@ -4,10 +4,50 @@
 
 from __future__ import annotations
 
+from core.narrative_language import get_narrative_language
 from game.quest_system import Quest, QuestKind
 
 
 def default_quests() -> list[Quest]:
+    if get_narrative_language() == "en":
+        return [
+            Quest(
+                quest_id="main_forest",
+                name="Investigate Forest Anomalies",
+                description="Find the source of abnormal energy in the Misty Forest and protect the village.",
+                objectives=["Enter Misty Forest", "Enter Mysterious Cave", "Reach Underground Ruins"],
+                kind=QuestKind.MAIN,
+                reward_gold=50,
+                reward_xp=80,
+            ),
+            Quest(
+                quest_id="side_merchant",
+                name="Merchant's Cargo",
+                description="Help Lina recover a missing crate near the forest edge.",
+                objectives=["Search in Misty Forest", "Return cargo to merchant"],
+                kind=QuestKind.SIDE,
+                reward_gold=30,
+                reward_xp=40,
+            ),
+            Quest(
+                quest_id="side_elder_cat",
+                name="Elder's Cat",
+                description="A cat went missing near the square; it may be by the tavern back alley.",
+                objectives=["Search near tavern", "Bring cat back to square"],
+                kind=QuestKind.SIDE,
+                reward_gold=10,
+                reward_xp=25,
+            ),
+            Quest(
+                quest_id="side_miner_tool",
+                name="Miner's Tool Bag",
+                description="Brock left his tool bag on the mountain foot path.",
+                objectives=["Find tool bag at mountain foot", "Return it to miner"],
+                kind=QuestKind.SIDE,
+                reward_gold=20,
+                reward_xp=30,
+            ),
+        ]
     return [
         Quest(
             quest_id="main_forest",

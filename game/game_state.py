@@ -12,6 +12,7 @@ from typing import Any
 
 from core.exceptions import SaveLoadError
 from game.constants import ROUNDS_PER_TIME_PERIOD, TIME_ORDER
+from game.domain_version import GAME_STATE_DOMAIN_VERSION
 from game.save_migrations import CURRENT_SAVE_SCHEMA, migrate_save_dict
 from game.player import Player
 from game.quest_system import QuestBook
@@ -31,6 +32,20 @@ class GameState:
     key_choices: list[str] = field(default_factory=list)
     tags: set[str] = field(default_factory=set)
     npc_mood: dict[str, str] = field(default_factory=dict)
+    dynamic_npcs: list[dict[str, Any]] = field(default_factory=list)
+    active_dynamic_npc_id: str | None = None
+    companions: list[dict[str, Any]] = field(default_factory=list)
+    pending_companion_offer: dict[str, Any] | None = None
+    companion_fate_log: list[dict[str, Any]] = field(default_factory=list)
+    flavor_log: list[dict[str, Any]] = field(default_factory=list)
+    world_flags: dict[str, Any] = field(default_factory=dict)
+    world_evolution: list[str] = field(default_factory=list)
+    stat_counters: dict[str, int] = field(default_factory=dict)
+    pending_gift_box: bool = False
+    meta_break_budget: int = 3
+    narrative_achievement_ids: list[str] = field(default_factory=list)
+    newspaper_issue: int = 0
+    game_state_domain_version: int = GAME_STATE_DOMAIN_VERSION
     game_log: list[str] = field(default_factory=list)
     created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat() + "Z")
     updated_at: str = field(default_factory=lambda: datetime.utcnow().isoformat() + "Z")
@@ -84,6 +99,20 @@ class GameState:
             "key_choices": list(self.key_choices),
             "tags": sorted(self.tags),
             "npc_mood": dict(self.npc_mood),
+            "dynamic_npcs": list(self.dynamic_npcs),
+            "active_dynamic_npc_id": self.active_dynamic_npc_id,
+            "companions": list(self.companions),
+            "pending_companion_offer": self.pending_companion_offer,
+            "companion_fate_log": list(self.companion_fate_log),
+            "flavor_log": list(self.flavor_log),
+            "world_flags": dict(self.world_flags),
+            "world_evolution": list(self.world_evolution),
+            "stat_counters": dict(self.stat_counters),
+            "pending_gift_box": self.pending_gift_box,
+            "meta_break_budget": self.meta_break_budget,
+            "narrative_achievement_ids": list(self.narrative_achievement_ids),
+            "newspaper_issue": self.newspaper_issue,
+            "game_state_domain_version": self.game_state_domain_version,
             "game_log": list(self.game_log),
             "created_at": self.created_at,
             "updated_at": self.updated_at,
@@ -104,6 +133,22 @@ class GameState:
             key_choices=list(data.get("key_choices", [])),
             tags=set(data.get("tags", [])),
             npc_mood=dict(data.get("npc_mood", {})),
+            dynamic_npcs=list(data.get("dynamic_npcs", [])),
+            active_dynamic_npc_id=data.get("active_dynamic_npc_id"),
+            companions=list(data.get("companions", [])),
+            pending_companion_offer=data.get("pending_companion_offer"),
+            companion_fate_log=list(data.get("companion_fate_log", [])),
+            flavor_log=list(data.get("flavor_log", [])),
+            world_flags=dict(data.get("world_flags", {})),
+            world_evolution=list(data.get("world_evolution", [])),
+            stat_counters=dict(data.get("stat_counters", {})),
+            pending_gift_box=bool(data.get("pending_gift_box", False)),
+            meta_break_budget=int(data.get("meta_break_budget", 3)),
+            narrative_achievement_ids=list(data.get("narrative_achievement_ids", [])),
+            newspaper_issue=int(data.get("newspaper_issue", 0)),
+            game_state_domain_version=int(
+                data.get("game_state_domain_version", GAME_STATE_DOMAIN_VERSION)
+            ),
             game_log=list(data.get("game_log", [])),
             created_at=data.get("created_at", datetime.utcnow().isoformat() + "Z"),
             updated_at=data.get("updated_at", datetime.utcnow().isoformat() + "Z"),

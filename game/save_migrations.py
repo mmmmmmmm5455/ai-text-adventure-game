@@ -13,7 +13,7 @@ from typing import Any
 from story.manifest import STORY_ASSET_VERSION
 
 # 存档文件中的 schema_version 整数；与剧情资产 STORY_ASSET_VERSION 独立
-CURRENT_SAVE_SCHEMA: int = 1
+CURRENT_SAVE_SCHEMA: int = 4
 
 
 def migrate_save_dict(data: dict[str, Any]) -> dict[str, Any]:
@@ -27,7 +27,30 @@ def migrate_save_dict(data: dict[str, Any]) -> dict[str, Any]:
         data.setdefault("story_asset_version", STORY_ASSET_VERSION)
         v = 1
 
-    # 未来示例：if v == 1 and CURRENT_SAVE_SCHEMA >= 2: _migrate_v1_to_v2(data); v = 2
+    if v < 2:
+        data.setdefault("dynamic_npcs", [])
+        data.setdefault("active_dynamic_npc_id", None)
+        data["schema_version"] = 2
+        v = 2
+
+    if v < 3:
+        data.setdefault("companions", [])
+        data.setdefault("pending_companion_offer", None)
+        data.setdefault("companion_fate_log", [])
+        data["schema_version"] = 3
+        v = 3
+
+    if v < 4:
+        data.setdefault("flavor_log", [])
+        data.setdefault("world_flags", {})
+        data.setdefault("world_evolution", [])
+        data.setdefault("stat_counters", {})
+        data.setdefault("pending_gift_box", False)
+        data.setdefault("meta_break_budget", 3)
+        data.setdefault("narrative_achievement_ids", [])
+        data.setdefault("newspaper_issue", 0)
+        data["schema_version"] = 4
+        v = 4
 
     if v < CURRENT_SAVE_SCHEMA:
         data["schema_version"] = CURRENT_SAVE_SCHEMA

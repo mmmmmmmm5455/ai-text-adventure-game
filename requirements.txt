@@ -1,5 +1,5 @@
 # AI 文字冒险游戏引擎 — 运行时依赖
-streamlit>=1.31.0
+streamlit>=1.33.0
 langchain>=0.2.14
 langchain-core>=0.2.38
 langchain-community>=0.2.12
