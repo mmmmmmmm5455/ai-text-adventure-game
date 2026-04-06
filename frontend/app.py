@@ -12,6 +12,10 @@ _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
+from core.io_encoding import configure_stdio_utf8
+
+configure_stdio_utf8()
+
 import streamlit as st
 
 from core.i18n import t
@@ -37,6 +41,7 @@ from frontend.screen.home import render_home
 from frontend.screen.settings import render_settings
 from frontend.ui_reconcile import reconcile_streamlit_ui_state
 from game.gear_social_cues import gear_public_impression
+from game.repair_system import durability_text
 from story.world_config import get_world_lore, get_world_name, new_game_state
 from utils.helpers import validate_user_text
 
@@ -152,7 +157,9 @@ def main() -> None:
             st.subheader(t("app.inventory"))
             if gs.player:
                 for it in gs.player.inventory.items:
-                    st.write(f"- {it.name} x{it.quantity}")
+                    dur = durability_text(it)
+                    tail = f" · {dur}" if dur else ""
+                    st.write(f"- {it.name} x{it.quantity}{tail}")
             st.divider()
             render_quest_list(gs)
 

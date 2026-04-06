@@ -21,7 +21,15 @@ def render_player_status(state: GameState) -> None:
     st.progress(min(1.0, p.mp / max(1, p.max_mp)), text=t("status.mp", v=p.mp, m=p.max_mp))
     st.caption(t("status.gold_xp", gold=p.gold, xp=p.xp))
     st.caption(
-        t("status.stats", str=p.strength, int=p.intelligence, agi=p.agility, cha=p.charisma)
+        t(
+            "status.stats",
+            str=p.strength,
+            per=p.perception,
+            end=p.endurance,
+            int=p.intelligence,
+            agi=p.agility,
+            cha=p.charisma,
+        )
     )
     st.divider()
     comp = get_active_companion(state)

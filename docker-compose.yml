@@ -4,10 +4,13 @@ services:
     ports:
       - "8501:8501"
     environment:
+      PYTHONIOENCODING: UTF-8
       # 宿主 Ollama（Windows/Mac Docker Desktop）
       OLLAMA_BASE_URL: http://host.docker.internal:11434
       OLLAMA_MODEL: llama3
       OLLAMA_EMBED_MODEL: nomic-embed-text
+      OLLAMA_TIMEOUT: "120"
+      OLLAMA_CONNECT_TIMEOUT: "8"
     volumes:
       - ./data:/app/data
     restart: unless-stopped

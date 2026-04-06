@@ -2,4 +2,5 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 export PYTHONPATH="$PWD"
-exec streamlit run frontend/app.py
+export PYTHONIOENCODING=UTF-8
+exec python -m streamlit run frontend/app.py

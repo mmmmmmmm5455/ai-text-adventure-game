@@ -8,6 +8,7 @@ import random
 import re
 from dataclasses import dataclass, field
 
+import httpx
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama import ChatOllama
@@ -17,7 +18,7 @@ from core.config import get_settings
 from core.i18n import t
 from core.narrative_language import get_narrative_language, merged_system_prompt
 from engine.llm_client import LLMClient
-from engine.memory_manager import MemoryManager
+from engine.memory_manager import shared_memory_manager
 from game.game_state import GameState
 from game.gear_social_cues import npc_gear_behavior_cue
 from story import characters as ch
@@ -59,14 +60,18 @@ class AIDialogueEngine:
     def __init__(self) -> None:
         self._settings = get_settings()
         self._fallback = LLMClient()
-        self.memory = MemoryManager()
+        self.memory = shared_memory_manager()
 
     def _chat_model(self, num_predict: int | None = None) -> ChatOllama:
         """num_predict 限制生成长度，开场白可设小一些以加快响应。"""
+        timeout = httpx.Timeout(
+            self._settings.ollama_timeout,
+            connect=min(self._settings.ollama_connect_timeout, self._settings.ollama_timeout),
+        )
         kwargs: dict = {
             "base_url": self._settings.ollama_base_url,
             "model": self._settings.ollama_model,
-            "timeout": self._settings.ollama_timeout,
+            "timeout": timeout,
         }
         if num_predict is not None:
             kwargs["num_predict"] = num_predict

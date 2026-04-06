@@ -72,7 +72,6 @@ class MemoryManager:
                     return [d for d in docs[0] if d]
             except Exception as e:
                 logger.warning("Chroma 查询失败：{}", e)
-        # 降级：简单关键词重叠
         words = set(query.replace("，", " ").split())
         scored: list[tuple[int, str]] = []
         for row in reversed(self._fallback):
@@ -81,3 +80,20 @@ class MemoryManager:
             scored.append((score, t))
         scored.sort(key=lambda x: x[0], reverse=True)
         return [t for _, t in scored[:k] if t]
+
+
+_shared_memory: MemoryManager | None = None
+
+
+def shared_memory_manager() -> MemoryManager:
+    """進程內單例：避免每個引擎各建一套 Chroma PersistentClient。"""
+    global _shared_memory
+    if _shared_memory is None:
+        _shared_memory = MemoryManager()
+    return _shared_memory
+
+
+def reset_shared_memory_manager() -> None:
+    """測試用：還原單例。"""
+    global _shared_memory
+    _shared_memory = None

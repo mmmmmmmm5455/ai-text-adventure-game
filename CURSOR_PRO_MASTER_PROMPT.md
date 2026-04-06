@@ -162,10 +162,10 @@ text-adventure-game/
 执行顺序建议
 1. 生成目录与依赖文件，确保 pip install -r requirements.txt 成功。
 2. 实现 core → game → engine（先 llm_client + story/ai 再 memory）→ story 数据 → frontend → tests。
-3. 提供 Windows/Linux 启动方式：start.bat / start.sh 调用 streamlit run frontend/app.py。
+3. 提供 Windows/Linux 启动方式：`start.bat` / `start.sh` 使用 `python -m streamlit run frontend/app.py`，并设置 `PYTHONPATH` 与 `PYTHONIOENCODING`（脚本已内置）。
 
 验收清单（你必须自检并满足）
-- [ ] streamlit run frontend/app.py 可启动，浏览器可完整走通：创建角色 → 探索 → 至少一次对话 → 保存/读取（若已实现）。
+- [ ] `python -m streamlit run frontend/app.py` 可启动，浏览器可完整走通：创建角色 → 探索 → 至少一次对话 → 保存/读取（若已实现）。
 - [ ] pytest 无失败（或明确标记 skip 的仅外部服务且默认 CI 不依赖）。
 - [ ] README 含安装 Ollama、拉模型、复制 .env、运行命令。
 - [ ] 无未完成 TODO、无死代码导入导致运行失败。

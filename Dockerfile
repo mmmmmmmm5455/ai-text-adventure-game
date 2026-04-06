@@ -6,7 +6,8 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PYTHONPATH=/app
+    PYTHONPATH=/app \
+    PYTHONIOENCODING=UTF-8
 
 COPY requirements.txt requirements-dev.txt ./
 RUN pip install --upgrade pip && \
@@ -19,4 +20,4 @@ RUN mkdir -p data/saves data/logs data/chroma_db data/cache
 EXPOSE 8501
 
 # 如需健康檢查，可改用 compose 的 healthcheck + curl（slim 映像需自行安裝）
-CMD ["streamlit", "run", "frontend/app.py", "--server.address=0.0.0.0", "--server.port=8501", "--browser.gatherUsageStats=false"]
+CMD ["python", "-m", "streamlit", "run", "frontend/app.py", "--server.address=0.0.0.0", "--server.port=8501", "--browser.gatherUsageStats=false"]

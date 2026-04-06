@@ -26,7 +26,7 @@ from engine.companion_narrative import (
 )
 from engine.dynamic_npc_gen import generate_dynamic_npc_json
 from engine.llm_client import LLMClient
-from engine.memory_manager import MemoryManager
+from engine.memory_manager import shared_memory_manager
 from game.dynamic_npc import (
     MAX_DYNAMIC_NPCS,
     apply_link_to_existing,
@@ -51,6 +51,11 @@ from game.companion import (
 from game.game_state import GameState
 from game.inventory import InventoryItem, ItemCategory
 from game.player import item_healing_potion
+from game.repair_system import (
+    attempt_equipped_repair,
+    can_npc_repair_here,
+    has_damaged_equipped,
+)
 from story import characters as ch
 from story import scenes as sc
 from story.endings import EndingInfo, decide_ending
@@ -110,7 +115,7 @@ class StoryEngine:
 
     def __init__(self) -> None:
         self.llm = LLMClient()
-        self.memory = MemoryManager()
+        self.memory = shared_memory_manager()
         self._graph = _build_scene_graph(self.llm)
         # 与 AIDialogueEngine 共用逻辑；供旧版 frontend 仅持有 StoryEngine 时仍可对话
         self._dialogue_eng: Any = None
@@ -253,6 +258,15 @@ class StoryEngine:
         if state.player.inventory.has_item("healing_potion"):
             choices.append(ChoiceOption("use_potion", t("story.choice.use_potion")))
 
+        if has_damaged_equipped(state, "weapon"):
+            choices.append(ChoiceOption("repair:self:weapon", t("repair.choice.self.weapon")))
+            if can_npc_repair_here(scene_id):
+                choices.append(ChoiceOption("repair:npc:weapon", t("repair.choice.npc.weapon")))
+        if has_damaged_equipped(state, "armor"):
+            choices.append(ChoiceOption("repair:self:armor", t("repair.choice.self.armor")))
+            if can_npc_repair_here(scene_id):
+                choices.append(ChoiceOption("repair:npc:armor", t("repair.choice.npc.armor")))
+
         if scene_id == "tavern":
             if not state.pending_companion_offer and get_active_companion(state) is None:
                 choices.append(
@@ -369,6 +383,12 @@ class StoryEngine:
                 return err, False
             state.add_log(t("story.log.drink_potion"))
             return t("story.ret.drink_potion"), False
+
+        if choice_id.startswith("repair:"):
+            _, via, slot = choice_id.split(":", 2)
+            msg = attempt_equipped_repair(state, slot, via_npc=(via == "npc"))
+            state.add_log(msg)
+            return msg, False
 
         if choice_id == "ending":
             info = decide_ending(state)
@@ -667,6 +687,25 @@ def grant_starting_items(state: GameState) -> None:
             category=ItemCategory.WEAPON,
             quantity=1,
             description="新手武器。",
+            meta={"durability": 34, "max_durability": 50, "base_value": 120},
+        )
+    )
+    state.player.inventory.add_item(
+        InventoryItem(
+            item_id="metal_scraps",
+            name="金属碎片",
+            category=ItemCategory.MISC,
+            quantity=3,
+            description="用于修理武器。",
+        )
+    )
+    state.player.inventory.add_item(
+        InventoryItem(
+            item_id="leather_pieces",
+            name="皮革碎片",
+            category=ItemCategory.MISC,
+            quantity=2,
+            description="用于修理防具。",
         )
     )
     state.player.equipped_weapon_id = "rusty_sword"

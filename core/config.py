@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     ollama_model: str = Field(default="llama3", alias="OLLAMA_MODEL")
     ollama_embed_model: str = Field(default="nomic-embed-text", alias="OLLAMA_EMBED_MODEL")
     ollama_timeout: float = Field(default=120.0, alias="OLLAMA_TIMEOUT")
+    ollama_connect_timeout: float = Field(default=8.0, alias="OLLAMA_CONNECT_TIMEOUT")
     llm_cache_enabled: bool = Field(default=True, alias="LLM_CACHE_ENABLED")
     max_user_input_length: int = Field(default=2000, alias="MAX_USER_INPUT_LENGTH")
 

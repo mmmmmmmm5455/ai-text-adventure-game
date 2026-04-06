@@ -26,20 +26,24 @@ ollama pull llama3
 ollama pull nomic-embed-text
 ```
 
-启动（Windows）：
+启动（Windows，**推荐**与 `start.bat` 一致）：
 
 ```powershell
 $env:PYTHONPATH = (Get-Location).Path
-streamlit run frontend/app.py
+$env:PYTHONIOENCODING = "utf-8"
+python -m streamlit run frontend/app.py
 ```
 
-或双击 / 运行 `start.bat`。
+说明：**勿写**裸命令 `streamlit run ...`（未装全局脚本时会找不到命令）；`PYTHONIOENCODING` 可减少 PowerShell 默认 `cp950` 下中文输出报错。
+
+或直接双击 / 运行 **`start.bat`**（已设置 `PYTHONPATH`、`PYTHONIOENCODING` 与 `python -m streamlit`）。
 
 macOS / Linux：
 
 ```bash
 chmod +x start.sh
-export PYTHONPATH=$PWD
+export PYTHONPATH="$PWD"
+export PYTHONIOENCODING=UTF-8
 ./start.sh
 ```
 
@@ -57,6 +61,7 @@ python -m pytest tests -q
 - **默认测试不依赖 Ollama**；契约测试在 `tests/contracts/`（`TextGenerationPort` 与 `LLMClient`）。
 - **可选真实 LLM 集成**：`set RUN_LLM_INTEGRATION=1` 后运行 `tests/integration/`。
 - 工程政策（作品集 / Docker / 存档领域版本）：见 **`docs/ARCHITECTURE_POLICY.md`**。
+- 已知问题、已修复项与残余风险：**`docs/EVALUATION_REPORT.md`**。
 
 推送到 GitHub 后，`.github/workflows/ci.yml` 会在 `main`/`master` 的推送与 PR 上运行相同测试（Python 3.11、3.12）。在仓库 **Settings → Actions** 中启用 Actions 即可。
 

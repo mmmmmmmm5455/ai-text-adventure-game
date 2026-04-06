@@ -11,7 +11,7 @@ from loguru import logger
 
 from core.narrative_language import get_narrative_language, user_locale_tail
 from engine.llm_client import LLMClient
-from engine.memory_manager import MemoryManager
+from engine.memory_manager import shared_memory_manager
 from game.enhancements import (
     NARRATIVE_ACHIEVEMENTS,
     append_world_evolution,
@@ -28,7 +28,7 @@ from story.world_config import get_world_lore
 class EnhancementEngine:
     def __init__(self) -> None:
         self.llm = LLMClient()
-        self.memory = MemoryManager()
+        self.memory = shared_memory_manager()
 
     def _remember(self, text: str, meta: dict[str, Any]) -> None:
         t = text.strip()

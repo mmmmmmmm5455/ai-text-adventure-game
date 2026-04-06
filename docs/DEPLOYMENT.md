@@ -5,10 +5,11 @@
 设置 `PYTHONPATH` 为项目根目录：
 
 ```bash
+export PYTHONIOENCODING=UTF-8
 python -m streamlit run frontend/app.py
 ```
 
-Windows 可使用 `start.bat`（内部为 `python -m streamlit`）。
+Windows 可使用 `start.bat`（内部已设置 `PYTHONPATH`、`PYTHONIOENCODING` 与 `python -m streamlit`）。
 
 ## CI
 

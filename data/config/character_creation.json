@@ -1,0 +1,57 @@
+{
+  "_meta": { "version": "1.0.0", "description": "角色創建：背景與特質" },
+  "rules": {
+    "max_positive_traits": 2,
+    "max_negative_traits": 2,
+    "stat_keys": ["str", "per", "end", "cha", "int", "agl"],
+    "stat_points_total": 20,
+    "stat_min": 1,
+    "stat_max": 10,
+    "auto_stat_min": 1,
+    "auto_stat_max": 8,
+    "llm_default_stat_base": 5
+  },
+  "backgrounds": [
+    {
+      "id": "wasteland_doctor",
+      "name": "廢土醫生",
+      "description": "在廢墟間救治傷患。",
+      "recommended_traits": ["first_aid_master", "calm_minded"],
+      "stat_bonus": {},
+      "starting_gold_bonus": 0,
+      "starting_items": []
+    },
+    {
+      "id": "scavenger",
+      "name": "拾荒者",
+      "description": "熟悉廢墟與資源。",
+      "recommended_traits": [],
+      "stat_bonus": {},
+      "starting_gold_bonus": 0,
+      "starting_items": []
+    },
+    {
+      "id": "drifter",
+      "name": "流浪者",
+      "description": "四處漂泊求生。",
+      "recommended_traits": [],
+      "stat_bonus": {},
+      "starting_gold_bonus": 0,
+      "starting_items": []
+    }
+  ],
+  "traits": {
+    "positive": [
+      { "id": "iron_stomach", "name": "鐵胃", "description": "", "effects": {} },
+      { "id": "social_butterfly", "name": "社交花蝴蝶", "description": "", "effects": {} },
+      { "id": "first_aid_master", "name": "急救精通", "description": "", "effects": {} },
+      { "id": "calm_minded", "name": "冷靜", "description": "", "effects": {} },
+      { "id": "keen_eye", "name": "眼尖", "description": "", "effects": {} }
+    ],
+    "negative": [
+      { "id": "bad_sense_of_direction", "name": "路痴", "description": "", "effects": {} },
+      { "id": "night_blindness", "name": "夜盲", "description": "", "effects": {} },
+      { "id": "clumsy", "name": "笨手笨腳", "description": "", "effects": {} }
+    ]
+  }
+}

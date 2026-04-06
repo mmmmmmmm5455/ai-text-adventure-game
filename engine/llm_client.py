@@ -58,9 +58,13 @@ class LLMClient:
         }
 
         last_err: Exception | None = None
+        timeout = httpx.Timeout(
+            self._settings.ollama_timeout,
+            connect=min(self._settings.ollama_connect_timeout, self._settings.ollama_timeout),
+        )
         for attempt in range(3):
             try:
-                with httpx.Client(timeout=self._settings.ollama_timeout) as client:
+                with httpx.Client(timeout=timeout) as client:
                     r = client.post(url, json=payload)
                     r.raise_for_status()
                     data = r.json()
@@ -118,8 +122,12 @@ def ollama_embed_text(text: str, model: str | None = None) -> list[float]:
     m = model or settings.ollama_embed_model
     url = f"{settings.ollama_base_url.rstrip('/')}/api/embeddings"
     payload = {"model": m, "prompt": text}
+    timeout = httpx.Timeout(
+        settings.ollama_timeout,
+        connect=min(settings.ollama_connect_timeout, settings.ollama_timeout),
+    )
     try:
-        with httpx.Client(timeout=settings.ollama_timeout) as client:
+        with httpx.Client(timeout=timeout) as client:
             r = client.post(url, json=payload)
             r.raise_for_status()
             data = r.json()

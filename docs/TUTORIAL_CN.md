@@ -22,6 +22,7 @@
 cd "D:\你的路径\ai_text_advanture_game"
 .\.venv\Scripts\Activate.ps1
 $env:PYTHONPATH = (Get-Location).Path
+$env:PYTHONIOENCODING = "utf-8"
 python -m streamlit run frontend/app.py
 ```
 
@@ -52,7 +53,7 @@ Local URL: http://localhost:8501
 1. 在资源管理器中进入项目根目录  
 2. 双击 **`start.bat`**  
 
-脚本会设置 `PYTHONPATH` 并执行 `streamlit run frontend\app.py`。
+脚本会设置 `PYTHONPATH`、`PYTHONIOENCODING`，并执行 `python -m streamlit run frontend\app.py`。
 
 然后在浏览器打开：**http://localhost:8501**
 
@@ -99,6 +100,11 @@ docker compose up --build
 - 未安装或未启动 **Ollama**，或模型未下载：在项目目录外执行 `ollama pull llama3`、`ollama pull nomic-embed-text`  
 - 安装并启动 Ollama 后，回到游戏点「刷新场景描写」再试
 
+### 3b. 终端里 `UnicodeEncodeError` / `cp950`（Windows）
+
+- 已在 `frontend/app.py` 与测试里尽量把 stdout 设为 UTF-8；若仍报错，请像上面那样设置 **`PYTHONIOENCODING=utf-8`**，或使用 **`start.bat`**。  
+- **连接超时**：可在 `.env` 里调整 `OLLAMA_CONNECT_TIMEOUT`（秒），连接失败时更快走降级，不必长时间卡住。
+
 ### 4. 第一次进入要填 Email
 
 - Streamlit 有时会提示 Email，**直接按回车跳过**即可
@@ -118,7 +124,7 @@ docker compose up --build
 
 ## 与测试命令的区别
 
-- **打开游戏**：`streamlit run frontend/app.py` → 用浏览器玩  
+- **打开游戏**：`python -m streamlit run frontend/app.py`（并设置 `PYTHONPATH`）→ 用浏览器玩  
 - **跑自动化测试**：`python -m pytest tests -q` → 不打开浏览器，只验证代码  
 
 两者不要混淆。

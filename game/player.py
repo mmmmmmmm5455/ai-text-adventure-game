@@ -12,6 +12,7 @@ from core.i18n import t
 from core.narrative_language import get_narrative_language
 from game.constants import MAX_INVENTORY_SLOTS
 from game.inventory import Inventory, InventoryItem, ItemCategory
+from game.repair_system import is_broken
 
 
 class Profession(str, Enum):
@@ -65,11 +66,21 @@ class Player:
     intelligence: int = 10
     agility: int = 10
     charisma: int = 10
+    perception: int = 10
+    endurance: int = 10
 
     inventory: Inventory = field(default_factory=lambda: Inventory(MAX_INVENTORY_SLOTS))
     equipped_weapon_id: str | None = None
     equipped_armor_id: str | None = None
     skills: list[str] = field(default_factory=list)
+    traits: list[str] = field(default_factory=list)
+    background_id: str | None = None
+    background_name: str | None = None
+    trait_effects: dict[str, Any] = field(default_factory=dict)
+
+    def trait_effect(self, key: str, default: Any = 0) -> Any:
+        """創角特質彙總效果（純資料，戰鬥等系統可自行讀取）。"""
+        return self.trait_effects.get(key, default)
 
     @staticmethod
     def create(name: str, profession: Profession, gender: str = "未指定") -> "Player":
@@ -148,6 +159,12 @@ class Player:
 
         wn = _name_for(self.equipped_weapon_id)
         an = _name_for(self.equipped_armor_id)
+        w_item = next((x for x in self.inventory.items if x.item_id == self.equipped_weapon_id), None)
+        a_item = next((x for x in self.inventory.items if x.item_id == self.equipped_armor_id), None)
+        if w_item and is_broken(w_item):
+            wn = None
+        if a_item and is_broken(a_item):
+            an = None
         if wn:
             parts.append(t("player.visible_weapon", name=wn))
         if an:
@@ -184,6 +201,12 @@ class Player:
             "intelligence": self.intelligence,
             "agility": self.agility,
             "charisma": self.charisma,
+            "perception": self.perception,
+            "endurance": self.endurance,
+            "traits": list(self.traits),
+            "background_id": self.background_id,
+            "background_name": self.background_name,
+            "trait_effects": dict(self.trait_effects),
             "inventory": self.inventory.to_dict(),
             "equipped_weapon_id": self.equipped_weapon_id,
             "equipped_armor_id": self.equipped_armor_id,
@@ -207,6 +230,12 @@ class Player:
             intelligence=int(data["intelligence"]),
             agility=int(data["agility"]),
             charisma=int(data["charisma"]),
+            perception=int(data.get("perception", 10)),
+            endurance=int(data.get("endurance", 10)),
+            traits=list(data.get("traits", [])),
+            background_id=data.get("background_id"),
+            background_name=data.get("background_name"),
+            trait_effects=dict(data.get("trait_effects", {})),
             inventory=Inventory.from_dict(data.get("inventory", {})),
             equipped_weapon_id=data.get("equipped_weapon_id"),
             equipped_armor_id=data.get("equipped_armor_id"),
@@ -222,6 +251,11 @@ def _default_skills(prof: Profession) -> list[str]:
         Profession.ROGUE: ["潜行", "背刺"],
         Profession.BARD: ["激励之歌", "交涉"],
     }[prof]
+
+
+def default_skills_for(profession: Profession) -> list[str]:
+    """公開 API：職業預設技能（供創角等非 Player.create 路徑使用）。"""
+    return list(_default_skills(profession))
 
 
 def item_healing_potion() -> InventoryItem:

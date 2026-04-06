@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from game.repair_system import is_broken
+
 if TYPE_CHECKING:
     from game.player import Player
 
@@ -16,6 +18,12 @@ def gear_public_impression(player: "Player") -> str:
     """
     w = player.equipped_weapon_id
     a = player.equipped_armor_id
+    w_item = next((x for x in player.inventory.items if x.item_id == w), None)
+    a_item = next((x for x in player.inventory.items if x.item_id == a), None)
+    if w_item and is_broken(w_item):
+        w = None
+    if a_item and is_broken(a_item):
+        a = None
     bits: list[str] = []
     if w == "rusty_sword":
         bits.append("佩一把生锈短剑，像刚出门的新手冒险者")
@@ -39,6 +47,12 @@ def gear_trust_signal_level(player: "Player") -> int:
     score = 1
     w = player.equipped_weapon_id
     a = player.equipped_armor_id
+    w_item = next((x for x in player.inventory.items if x.item_id == w), None)
+    a_item = next((x for x in player.inventory.items if x.item_id == a), None)
+    if w_item and is_broken(w_item):
+        w = None
+    if a_item and is_broken(a_item):
+        a = None
     if w and w != "rusty_sword":
         score += 2
     elif w == "rusty_sword":

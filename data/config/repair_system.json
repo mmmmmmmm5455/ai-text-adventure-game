@@ -1,0 +1,144 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "description": "修理系統配置"
+  },
+  "general_rules": {
+    "broken_item_penalty": "cannot_equip",
+    "low_durability_warning_threshold": 0.3,
+    "repair_skill_attribute": "intelligence",
+    "repair_skill_multiplier": 5
+  },
+  "repair_formula": {
+    "base_success_rate": 0.6,
+    "skill_bonus_per_point": 0.05,
+    "max_success_rate": 0.95,
+    "min_success_rate": 0.1,
+    "trait_bonuses": {
+      "smith_apprentice": 0.2,
+      "tinkerer": 0.15
+    }
+  },
+  "repair_randomness": {
+    "durability_restored_min": 10,
+    "durability_restored_max": 40,
+    "critical_success_chance": 0.05,
+    "critical_success_repair_full": true,
+    "backfire_chance": 0.03,
+    "backfire_max_durability_loss": 5,
+    "material_saving_chance": 0.1
+  },
+  "npc_repair": {
+    "cost_multiplier": 0.5,
+    "base_value_per_durability": 2,
+    "success_guaranteed": true,
+    "available_locations": ["town_blacksmith", "village_repair_stand"]
+  },
+  "item_categories": {
+    "WEAPON": {
+      "repairable": true,
+      "default_max_durability": 50,
+      "damage_per_use": 1,
+      "damage_on_block": 2,
+      "repair_material_type": "metal",
+      "repair_skill_required": "smithing"
+    },
+    "ARMOR": {
+      "repairable": true,
+      "default_max_durability": 80,
+      "damage_per_hit": 1,
+      "repair_material_type": "leather_metal",
+      "repair_skill_required": "tailoring"
+    },
+    "CONSUMABLE": {
+      "repairable": false
+    },
+    "QUEST": {
+      "repairable": false
+    },
+    "MISC": {
+      "repairable": false
+    }
+  },
+  "repair_materials": {
+    "metal_scraps": {
+      "name": "金屬碎片",
+      "description": "可用於維修武器和輕型護甲",
+      "rarity": "common",
+      "stack_size": 20,
+      "acquisition": ["loot", "vendor", "dismantle"]
+    },
+    "leather_pieces": {
+      "name": "皮革碎片",
+      "description": "可用於維修皮甲和布甲",
+      "rarity": "common",
+      "stack_size": 20,
+      "acquisition": ["loot", "vendor"]
+    },
+    "enchanted_dust": {
+      "name": "附魔粉",
+      "description": "可維修魔法物品，有概率提升修理效果",
+      "rarity": "rare",
+      "stack_size": 10,
+      "acquisition": ["dungeon_loot", "wizard_tower"]
+    }
+  },
+  "special_repairs": {
+    "mold_repair": {
+      "enabled": true,
+      "name": "霉菌修復",
+      "description": "菌人可用菌絲修復有機材質裝備",
+      "available_for": ["leather", "organic"],
+      "hp_cost": 10,
+      "durability_restored_percent": 0.5,
+      "skill_check_required": false,
+      "failure_consequence": "hp_loss_only"
+    },
+    "dimensional_repair": {
+      "enabled": true,
+      "name": "次元修理",
+      "description": "在異界中發現的時間逆流現象",
+      "full_repair_all": true,
+      "cost": "one_dimensional_fragment",
+      "available_in_rift": true,
+      "requires_rift_charges": 0
+    },
+    "enchanted_repair": {
+      "enabled": true,
+      "name": "魔法修理",
+      "description": "使用附魔粉的精確修理",
+      "skill_bonus_extra": 0.2,
+      "material_required": "enchanted_dust",
+      "material_amount": 1,
+      "crit_chance_bonus": 0.15
+    },
+    "emergency_repair": {
+      "enabled": true,
+      "name": "緊急修理",
+      "description": "快速修理，犧牲部分耐久度換取速度",
+      "always_succeeds": true,
+      "durability_restored_percent": 0.3,
+      "costs_extra_materials": true,
+      "material_cost_multiplier": 2.0
+    }
+  },
+  "npc_repair_pricing": {
+    "formula": "item_value * lost_durability_ratio * cost_multiplier",
+    "min_cost": 5,
+    "max_cost_discount_for_loyalty": 0.3,
+    "loyalty_threshold": 80,
+    "rush_service_multiplier": 1.5
+  },
+  "skill_checks": {
+    "smithing": {
+      "stat": "intelligence",
+      "trained_only": true,
+      "training_locations": ["blacksmith_workshop", "military_camp"]
+    },
+    "tailoring": {
+      "stat": "agility",
+      "trained_only": true,
+      "training_locations": ["tailor_shop"]
+    }
+  }
+}

@@ -18,6 +18,11 @@ def test_new_game_welcome_logs_gender_identity() -> None:
     assert any("身份记录" in line and "女" in line for line in gs.game_log)
 
 
+def test_new_game_invalid_profession_raises() -> None:
+    with pytest.raises(ValueError, match="無效職業"):
+        new_game_state("x", "不存在的职业")
+
+
 def test_game_state_round_and_time(tmp_path: Path) -> None:
     gs = new_game_state("测试英雄", Profession.WARRIOR.value)
     assert gs.time_label() in ("早晨", "正午", "黄昏", "深夜")

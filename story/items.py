@@ -44,4 +44,25 @@ def catalog() -> dict[str, InventoryItem]:
             quantity=1,
             description="基础防护。",
         ),
+        "metal_scraps": InventoryItem(
+            item_id="metal_scraps",
+            name="金属碎片",
+            category=ItemCategory.MISC,
+            quantity=1,
+            description="可用于修理武器与轻型护甲。",
+        ),
+        "leather_pieces": InventoryItem(
+            item_id="leather_pieces",
+            name="皮革碎片",
+            category=ItemCategory.MISC,
+            quantity=1,
+            description="可用于修理皮甲与布甲。",
+        ),
+        "enchanted_dust": InventoryItem(
+            item_id="enchanted_dust",
+            name="附魔粉",
+            category=ItemCategory.MISC,
+            quantity=1,
+            description="用于附魔修理，能提高成功率。",
+        ),
     }
