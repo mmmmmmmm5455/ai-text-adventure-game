@@ -77,6 +77,18 @@ class Player:
     background_id: str | None = None
     background_name: str | None = None
     trait_effects: dict[str, Any] = field(default_factory=dict)
+    # 擴展：與 save schema v5 / 修理與劇情钩子對齊（預設不影響現有流程）
+    is_mancelled: bool = False
+    mold_skills: list[str] = field(default_factory=list)
+    mold_infection_rounds: int = 0
+    dimensional_fragments: int = 0
+    dimensional_energy: int = 3
+    dimensional_rift_charges: int = 2
+    dimensional_rift_cooldown_rounds: int = 0
+    current_body_id: str = "player_body"
+    active_body_swaps: list[dict[str, Any]] = field(default_factory=list)
+    luck_value: int = 50
+    companion_loyalty_global_modifier: int = 0
 
     def trait_effect(self, key: str, default: Any = 0) -> Any:
         """創角特質彙總效果（純資料，戰鬥等系統可自行讀取）。"""
@@ -207,6 +219,17 @@ class Player:
             "background_id": self.background_id,
             "background_name": self.background_name,
             "trait_effects": dict(self.trait_effects),
+            "is_mancelled": self.is_mancelled,
+            "mold_skills": list(self.mold_skills),
+            "mold_infection_rounds": self.mold_infection_rounds,
+            "dimensional_fragments": self.dimensional_fragments,
+            "dimensional_energy": self.dimensional_energy,
+            "dimensional_rift_charges": self.dimensional_rift_charges,
+            "dimensional_rift_cooldown_rounds": self.dimensional_rift_cooldown_rounds,
+            "current_body_id": self.current_body_id,
+            "active_body_swaps": list(self.active_body_swaps),
+            "luck_value": self.luck_value,
+            "companion_loyalty_global_modifier": self.companion_loyalty_global_modifier,
             "inventory": self.inventory.to_dict(),
             "equipped_weapon_id": self.equipped_weapon_id,
             "equipped_armor_id": self.equipped_armor_id,
@@ -236,6 +259,17 @@ class Player:
             background_id=data.get("background_id"),
             background_name=data.get("background_name"),
             trait_effects=dict(data.get("trait_effects", {})),
+            is_mancelled=bool(data.get("is_mancelled", False)),
+            mold_skills=list(data.get("mold_skills", [])),
+            mold_infection_rounds=int(data.get("mold_infection_rounds", 0)),
+            dimensional_fragments=int(data.get("dimensional_fragments", 0)),
+            dimensional_energy=int(data.get("dimensional_energy", 3)),
+            dimensional_rift_charges=int(data.get("dimensional_rift_charges", 2)),
+            dimensional_rift_cooldown_rounds=int(data.get("dimensional_rift_cooldown_rounds", 0)),
+            current_body_id=str(data.get("current_body_id", "player_body")),
+            active_body_swaps=list(data.get("active_body_swaps", [])),
+            luck_value=int(data.get("luck_value", 50)),
+            companion_loyalty_global_modifier=int(data.get("companion_loyalty_global_modifier", 0)),
             inventory=Inventory.from_dict(data.get("inventory", {})),
             equipped_weapon_id=data.get("equipped_weapon_id"),
             equipped_armor_id=data.get("equipped_armor_id"),

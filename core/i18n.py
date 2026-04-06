@@ -342,6 +342,17 @@ _T: dict[str, dict[str, str]] = {
     },
     "dyn.log.hidden_bonus": {"zh": "【隐藏】你的装束让对方多信了你一分。", "en": "[Hidden] Your outfit earns extra trust."},
     "dyn.log.accept": {"zh": "你接下了「{name}」的委托。", "en": "You accepted {name}'s request."},
+    "dyn.accepted_blurb": {
+        "zh": "你已接下「{name}」的委托，可自由对话追问细节，或返回广场继续探索。",
+        "en": "You accepted {name}'s request. Chat for details or return to the square.",
+    },
+    "dyn.accepted_hint": {
+        "zh": "点击下方进入对话模式后，可用输入框像与普通 NPC 一样聊天（结束对话后回到探索）。",
+        "en": "Open chat mode to talk freely in the text box; end dialogue to return to exploration.",
+    },
+    "dyn.btn.chat": {"zh": "自由对话（输入框聊天）", "en": "Free chat (text input)"},
+    "dyn.btn.leave_square": {"zh": "返回广场", "en": "Back to square"},
+    "dyn.log.chat_open": {"zh": "你与「{name}」聊了起来。", "en": "You chat with {name}."},
     "dyn.log.decline": {"zh": "你婉拒了「{name}」。", "en": "You declined {name}."},
     "status.no_player": {"zh": "尚未创建角色。", "en": "No character created yet."},
     "status.character": {"zh": "角色", "en": "Character"},

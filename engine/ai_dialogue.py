@@ -7,6 +7,7 @@ from __future__ import annotations
 import random
 import re
 from dataclasses import dataclass, field
+from types import SimpleNamespace
 
 import httpx
 from langchain_core.output_parsers import StrOutputParser
@@ -19,9 +20,28 @@ from core.i18n import t
 from core.narrative_language import get_narrative_language, merged_system_prompt
 from engine.llm_client import LLMClient
 from engine.memory_manager import shared_memory_manager
+from game.dynamic_npc import find_dynamic_npc_for_dialogue
 from game.game_state import GameState
 from game.gear_social_cues import npc_gear_behavior_cue
 from story import characters as ch
+
+
+def _dynamic_social_traits(npc: dict) -> SimpleNamespace:
+    """与 NPCProfile 字段兼容，供打赏/威慑共用。"""
+    tier = str(npc.get("tier") or "common")
+    gen = {"common": 4, "rare": 6, "epic": 8}.get(tier, 4)
+    cap = {"common": 12, "rare": 16, "epic": 20}.get(tier, 12)
+    res = {"common": 11, "rare": 14, "epic": 17}.get(tier, 11)
+    mood = int(npc.get("mood") or 50)
+    res += max(0, (55 - mood) // 6)
+    name = (npc.get("name") or "路人").strip()[:48]
+    return SimpleNamespace(
+        name=name,
+        generosity=gen,
+        hostile=False,
+        max_intimidate_payout=cap,
+        intimidate_resistance=res,
+    )
 
 # 叙事指导：小额施舍可与性格一致；真实到账由系统在回合末单独结算并标注
 _ECONOMY_GUIDANCE = (
@@ -108,6 +128,9 @@ class AIDialogueEngine:
 
     def start_dialogue(self, state: GameState, npc_id: str) -> str:
         """生成开场白。"""
+        dyn = find_dynamic_npc_for_dialogue(state, npc_id)
+        if dyn:
+            return self._start_dynamic_dialogue(state, dyn)
         prof = ch.NPCS.get(npc_id)
         if not prof:
             return t("dialogue.err.no_npc")
@@ -152,6 +175,102 @@ class AIDialogueEngine:
             player=state.player.name if state.player else "Traveler",
         )
 
+    def _start_dynamic_dialogue(self, state: GameState, npc: dict) -> str:
+        """动态路人：刚接下委托后的自由对话开场。"""
+        if not state.player:
+            return t("dialogue.err.no_player")
+        nm = (npc.get("name") or "路人").strip()[:48]
+        gear = self._gear_rules(state)
+        ident = self._player_identity(state)
+        director = npc_gear_behavior_cue("__dynamic_passerby__", state.player)
+        base_sys = (
+            f"你是广场邂逅的路人「{nm}」。外貌：{npc.get('appearance', '')[:400]}\n"
+            f"性格：{npc.get('personality', '')}\n"
+            f"你已委托对方帮忙：{npc.get('request', '')[:400]}\n"
+            f"{ident}\n{director}\n{gear}\n{_ECONOMY_GUIDANCE}\n"
+            "对方刚接受委托。请用 2～3 句中文（或叙事语言要求英文）简短欢迎对方追问细节、闲聊；"
+            "不要整段重复委托全文，不要跳出角色。"
+        )
+        system = merged_system_prompt(base_sys) or base_sys
+        open_tail = (
+            "English, 2–3 sentences, brief."
+            if get_narrative_language() == "en"
+            else "中文 2～3 句，简短自然。"
+        )
+        user = (
+            f"旅人「{state.player.name}」已答应你的请求。\n"
+            f"你曾说道：{npc.get('opening', '')[:300]}\n"
+            f"{open_tail}"
+        )
+        try:
+            prompt = ChatPromptTemplate.from_messages(
+                [
+                    ("system", "{system}"),
+                    ("human", "{user}"),
+                ]
+            )
+            chain = prompt | self._chat_model(num_predict=220) | StrOutputParser()
+            text = chain.invoke({"system": system or "", "user": user}).strip()
+            if text:
+                return text
+        except Exception as e:
+            logger.warning("动态路人对话开场失败：{}", e)
+        return t("dialogue.fallback.opening", name=nm, player=state.player.name)
+
+    def _continue_dynamic_dialogue(
+        self,
+        state: GameState,
+        session: DialogueSession,
+        user_text: str,
+        npc: dict,
+    ) -> tuple[str, list[str]]:
+        prof = _dynamic_social_traits(npc)
+        session.add_turn("user", user_text)
+        hist = session.export_text()
+        gear = self._gear_rules(state)
+        ident = self._player_identity(state)
+        director = npc_gear_behavior_cue("__dynamic_passerby__", state.player) if state.player else ""
+        base_sys = (
+            f"你是路人「{prof.name}」。外貌：{str(npc.get('appearance', ''))[:400]}\n"
+            f"性格：{str(npc.get('personality', ''))[:200]}\n"
+            f"委托内容：{str(npc.get('request', ''))[:400]}\n"
+            f"{ident}\n{director}\n{gear}\n{_ECONOMY_GUIDANCE}\n"
+            "根据对话记录自然回应；可补充委托细节、闲聊；禁止编造玩家长背包；不要跳出角色。"
+        )
+        system = merged_system_prompt(base_sys) or base_sys
+        tail = (
+            "Reply in English at moderate length."
+            if get_narrative_language() == "en"
+            else "请用中文回复，长度适中。"
+        )
+        user = f"对话记录：\n{hist}\n{tail}"
+        reply = ""
+        try:
+            prompt = ChatPromptTemplate.from_messages(
+                [("system", "{system}"), ("human", "{user}")],
+            )
+            chain = prompt | self._chat_model(num_predict=400) | StrOutputParser()
+            reply = chain.invoke({"system": system or "", "user": user}).strip()
+        except Exception as e:
+            logger.warning("动态路人对话继续失败：{}", e)
+            reply = self._fallback.generate_text(
+                f"玩家说：{user_text}\n请以{prof.name}口吻简短回应。",
+                system=system,
+            )
+        session.add_turn("assistant", reply)
+        session.affinity += self._affinity_delta(user_text, reply)
+        gift_gold = self._maybe_dialogue_gift(state, session, prof, user_text)
+        if gift_gold > 0:
+            reply = f"{reply}\n\n*（你获得了 {gift_gold} 金币。）*"
+            state.touch()
+        clues = self._extract_clues(reply)
+        if clues:
+            self.memory.add_memory(
+                f"{prof.name} 透露线索：{'；'.join(clues)}",
+                {"npc": session.npc_id},
+            )
+        return reply, clues
+
     def continue_dialogue(
         self,
         state: GameState,
@@ -161,6 +280,10 @@ class AIDialogueEngine:
         """
         继续对话：返回 (NPC 回复, 线索列表)。
         """
+        dyn = find_dynamic_npc_for_dialogue(state, session.npc_id)
+        if dyn:
+            return self._continue_dynamic_dialogue(state, session, user_text, dyn)
+
         prof = ch.NPCS.get(session.npc_id)
         if not prof:
             return t("dialogue.no_response"), []
@@ -214,6 +337,13 @@ class AIDialogueEngine:
 
     def end_dialogue(self, state: GameState, session: DialogueSession) -> str:
         """结束语。"""
+        dyn = find_dynamic_npc_for_dialogue(state, session.npc_id)
+        if dyn:
+            name = (dyn.get("name") or "路人").strip()[:48]
+            if session.affinity >= 3 and state.player:
+                state.player.gold += 5
+                state.add_log(t("dialogue.log.affinity_tip", name=name))
+            return t("dialogue.safe", name=name)
         prof = ch.NPCS.get(session.npc_id)
         if not prof:
             return t("dialogue.leave")
@@ -282,7 +412,7 @@ class AIDialogueEngine:
         self,
         state: GameState,
         session: DialogueSession,
-        prof: ch.NPCProfile,
+        prof: ch.NPCProfile | SimpleNamespace,
         user_text: str,
     ) -> int:
         """
@@ -329,8 +459,13 @@ class AIDialogueEngine:
         威慑索取：对所有 NPC 可用；每名 NPC 整场游戏仅成功榨取一次金币。
         返回 (叙事文本, 获得金币数)。
         """
-        prof = ch.NPCS.get(session.npc_id)
-        if not prof or not state.player:
+        if not state.player:
+            return t("dialogue.err.ellipsis"), 0
+        dyn = find_dynamic_npc_for_dialogue(state, session.npc_id)
+        prof: ch.NPCProfile | SimpleNamespace | None = ch.NPCS.get(session.npc_id)
+        if dyn is not None:
+            prof = _dynamic_social_traits(dyn)
+        if prof is None:
             return t("dialogue.err.ellipsis"), 0
 
         tag = f"intimidate_paid:{session.npc_id}"

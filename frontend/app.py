@@ -195,7 +195,7 @@ def main() -> None:
         assert gs is not None
 
         if gs.active_dynamic_npc_id:
-            render_dynamic_npc_encounter(gs)
+            render_dynamic_npc_encounter(gs, dialogue_engine)
             return
 
         if st.session_state.ui_mode == "dialogue" and st.session_state.dialogue_session:

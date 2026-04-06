@@ -49,6 +49,9 @@ class GameState:
     game_log: list[str] = field(default_factory=list)
     created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat() + "Z")
     updated_at: str = field(default_factory=lambda: datetime.utcnow().isoformat() + "Z")
+    repair_history: list[Any] = field(default_factory=list)
+    loot_history: list[Any] = field(default_factory=list)
+    active_rift: dict[str, Any] | None = None
 
     player: Player | None = None
     quests: QuestBook = field(default_factory=QuestBook)
@@ -116,6 +119,9 @@ class GameState:
             "game_log": list(self.game_log),
             "created_at": self.created_at,
             "updated_at": self.updated_at,
+            "repair_history": list(self.repair_history),
+            "loot_history": list(self.loot_history),
+            "active_rift": self.active_rift,
             "player": self.player.to_dict(),
             "quests": self.quests.to_dict(),
         }
@@ -152,6 +158,9 @@ class GameState:
             game_log=list(data.get("game_log", [])),
             created_at=data.get("created_at", datetime.utcnow().isoformat() + "Z"),
             updated_at=data.get("updated_at", datetime.utcnow().isoformat() + "Z"),
+            repair_history=list(data.get("repair_history", [])),
+            loot_history=list(data.get("loot_history", [])),
+            active_rift=data.get("active_rift"),
             player=Player.from_dict(data["player"]),
             quests=QuestBook.from_dict(data.get("quests", {})),
         )

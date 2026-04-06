@@ -16,6 +16,8 @@ from core.narrative_language import (
     get_narrative_language,
     scene_prompt_tail,
     scene_system_brief,
+    scene_variety_instruction,
+    scrub_latin_leakage_zh,
 )
 from engine.enhancement_engine import EnhancementEngine, maybe_record_world_flags_from_action
 from engine.companion_gen import generate_companion_blueprint
@@ -71,6 +73,7 @@ class _GraphState(TypedDict, total=False):
     profession: str
     time_label: str
     memories: str
+    variety: str
     output: str
 
 
@@ -83,6 +86,7 @@ def _build_scene_graph(llm: LLMClient) -> Any:
         name = sc.scene_name(sid)
         base = sc.scene_description(sid) if scene else ""
         mem = state.get("memories", "")
+        variety = (state.get("variety") or "").strip()
         system = scene_system_brief()
         prompt = (
             f"世界观：{get_world_lore()}\n"
@@ -90,9 +94,10 @@ def _build_scene_graph(llm: LLMClient) -> Any:
             f"角色：{state.get('player_name', '旅人')}（{state.get('profession', '')}）\n"
             f"场景：{name}\n场景基调：{base}\n"
             f"相关记忆摘录：{mem or '无'}\n"
+            f"{variety}\n"
             f"{scene_prompt_tail()}"
         )
-        out = llm.generate_text(prompt, system=system, temperature=0.75)
+        out = llm.generate_text(prompt, system=system, temperature=0.82)
         return {**state, "output": out}
 
     graph = StateGraph(_GraphState)
@@ -160,6 +165,8 @@ class StoryEngine:
             )
         scene_id = state.current_scene_id
         mem_text = "；".join(self.memory.query_relevant(scene_id + " " + state.time_label(), k=3))
+        gen_seq = bump_counter(state, "scene_description_gens", 1)
+        variety_idx = gen_seq + state.round_count * 2 - 1
         try:
             out = self._graph.invoke(
                 {
@@ -168,9 +175,12 @@ class StoryEngine:
                     "profession": state.player.profession.value,
                     "time_label": state.time_label(),
                     "memories": mem_text,
+                    "variety": scene_variety_instruction(variety_idx),
                 }
             )
             text = str(out.get("output", "")).strip()
+            if text and get_narrative_language() == "zh":
+                text = scrub_latin_leakage_zh(text)
             if text:
                 self.memory.add_memory(
                     f"{state.player.name} 在 {scene_id}: {text[:200]}",

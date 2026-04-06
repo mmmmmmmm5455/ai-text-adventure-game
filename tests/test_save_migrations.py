@@ -16,3 +16,25 @@ def test_migrate_old_save_without_schema() -> None:
     assert data.get("flavor_log") == []
     assert data.get("stat_counters") == {}
     assert data.get("meta_break_budget") == 3
+    p = data["player"]
+    assert p.get("dimensional_fragments") == 0
+    assert p.get("is_mancelled") is False
+    assert data.get("repair_history") == []
+
+
+def test_v5_migrates_dimentional_typo_on_items() -> None:
+    data: dict = {
+        "schema_version": 4,
+        "story_asset_version": STORY_ASSET_VERSION,
+        "player": {
+            "inventory": {
+                "max_slots": 20,
+                "items": [{"item_id": "x", "dimentional_origin": "mold", "meta": {}}],
+            }
+        },
+    }
+    data = migrate_save_dict(data)
+    assert data["schema_version"] == 5
+    it = data["player"]["inventory"]["items"][0]
+    assert it.get("dimensional_origin") == "mold"
+    assert "dimentional_origin" not in it

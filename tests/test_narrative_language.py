@@ -5,6 +5,7 @@ from __future__ import annotations
 from core.narrative_language import (
     merged_system_prompt,
     offline_llm_fallback,
+    scrub_latin_leakage_zh,
     set_narrative_language,
     user_locale_tail,
 )
@@ -41,3 +42,19 @@ def test_user_locale_tail() -> None:
     assert "中文" in user_locale_tail()
     set_narrative_language("en")
     assert "English" in user_locale_tail()
+
+
+def test_scrub_latin_leakage_zh() -> None:
+    set_narrative_language("zh")
+    raw = "水面荡漾着微风的ipples，moonlight 洒下，仍有 silence 残留。"
+    out = scrub_latin_leakage_zh(raw)
+    assert "ipples" not in out
+    assert "moonlight" not in out.lower()
+    assert "silence" not in out.lower()
+    assert "水面" in out
+
+
+def test_scrub_noop_when_en() -> None:
+    set_narrative_language("en")
+    s = "The moonlight ripples on the well."
+    assert scrub_latin_leakage_zh(s) == s

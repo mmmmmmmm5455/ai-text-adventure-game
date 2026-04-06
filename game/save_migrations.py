@@ -13,7 +13,7 @@ from typing import Any
 from story.manifest import STORY_ASSET_VERSION
 
 # 存档文件中的 schema_version 整数；与剧情资产 STORY_ASSET_VERSION 独立
-CURRENT_SAVE_SCHEMA: int = 4
+CURRENT_SAVE_SCHEMA: int = 5
 
 
 def migrate_save_dict(data: dict[str, Any]) -> dict[str, Any]:
@@ -51,6 +51,53 @@ def migrate_save_dict(data: dict[str, Any]) -> dict[str, Any]:
         data.setdefault("newspaper_issue", 0)
         data["schema_version"] = 4
         v = 4
+
+    # v4 → v5：擴展玩家與全局欄位（菌裔/次元/交換身體等，供修理與劇情系統使用）
+    if v < 5:
+        player = data.get("player")
+        if isinstance(player, dict):
+            player.setdefault("background_id", None)
+            player.setdefault("background_name", None)
+            player.setdefault("traits", [])
+            player.setdefault("trait_effects", {})
+            player.setdefault("perception", 10)
+            player.setdefault("endurance", 10)
+            player.setdefault("is_mancelled", False)
+            player.setdefault("mold_skills", [])
+            player.setdefault("mold_infection_rounds", 0)
+            player.setdefault("dimensional_fragments", 0)
+            player.setdefault("dimensional_energy", 3)
+            player.setdefault("dimensional_rift_charges", 2)
+            player.setdefault("dimensional_rift_cooldown_rounds", 0)
+            player.setdefault("current_body_id", "player_body")
+            player.setdefault("active_body_swaps", [])
+            player.setdefault("luck_value", 50)
+            player.setdefault("companion_loyalty_global_modifier", 0)
+
+            inv = player.get("inventory")
+            if isinstance(inv, dict):
+                items = inv.get("items", [])
+                if isinstance(items, list):
+                    for item in items:
+                        if not isinstance(item, dict):
+                            continue
+                        typo_origin = item.pop("dimentional_origin", None)
+                        if typo_origin is not None and "dimensional_origin" not in item:
+                            item["dimensional_origin"] = str(typo_origin)
+                        item.setdefault("dimensional_origin", "normal")
+                        meta = item.setdefault("meta", {})
+                        if isinstance(meta, dict):
+                            meta.setdefault(
+                                "dimensional_origin",
+                                str(item.get("dimensional_origin", "normal")),
+                            )
+                            meta.setdefault("custom_properties", {})
+
+        data.setdefault("repair_history", [])
+        data.setdefault("loot_history", [])
+        data.setdefault("active_rift", None)
+        data["schema_version"] = 5
+        v = 5
 
     if v < CURRENT_SAVE_SCHEMA:
         data["schema_version"] = CURRENT_SAVE_SCHEMA

@@ -5,11 +5,16 @@ from __future__ import annotations
 import streamlit as st
 
 from core.i18n import t
-from game.dynamic_npc import check_hidden_bonus, register_dynamic_npc_quest
+from engine.ai_dialogue import AIDialogueEngine, DialogueSession
+from game.dynamic_npc import (
+    check_hidden_bonus,
+    dynamic_dialogue_session_id,
+    register_dynamic_npc_quest,
+)
 from game.game_state import GameState
 
 
-def render_dynamic_npc_encounter(gs: GameState) -> None:
+def render_dynamic_npc_encounter(gs: GameState, dialogue_engine: AIDialogueEngine) -> None:
     """渲染当前 active_dynamic_npc_id 对应路人；按钮内直接修改 gs 并 rerun。"""
     nid = gs.active_dynamic_npc_id
     if not nid:
@@ -84,7 +89,6 @@ def render_dynamic_npc_encounter(gs: GameState) -> None:
                 ):
                     npc["hidden_bonus_applied"] = True
                     gs.add_log(t("dyn.log.hidden_bonus"))
-                gs.active_dynamic_npc_id = None
                 gs.add_log(t("dyn.log.accept", name=npc.get("name", t("dyn.title"))))
                 gs.touch()
                 st.rerun()
@@ -93,6 +97,36 @@ def render_dynamic_npc_encounter(gs: GameState) -> None:
                 gs.dynamic_npcs = [n for n in gs.dynamic_npcs if n.get("id") != nid]
                 gs.active_dynamic_npc_id = None
                 gs.add_log(t("dyn.log.decline", name=npc.get("name", t("dyn.title"))))
+                gs.touch()
+                st.rerun()
+
+    elif phase == "accepted":
+        st.success(
+            t(
+                "dyn.accepted_blurb",
+                name=npc.get("name", t("dyn.unknown")),
+            )
+        )
+        st.caption(t("dyn.accepted_hint"))
+        b1, b2 = st.columns(2)
+        with b1:
+            if st.button(t("dyn.btn.chat"), key=f"dyn_chat_{nid}"):
+                did = dynamic_dialogue_session_id(str(nid))
+                sess = DialogueSession(npc_id=did)
+                opening = dialogue_engine.start_dialogue(gs, did)
+                sess.add_turn("assistant", opening)
+                st.session_state.dialogue_session = sess
+                st.session_state.ui_mode = "dialogue"
+                gs.active_dynamic_npc_id = None
+                pl = gs.player.name if gs.player else "?"
+                gs.add_log(
+                    t("dyn.log.chat_open", name=npc.get("name", t("dyn.title")), player=pl)
+                )
+                gs.touch()
+                st.rerun()
+        with b2:
+            if st.button(t("dyn.btn.leave_square"), key=f"dyn_leave_sq_{nid}"):
+                gs.active_dynamic_npc_id = None
                 gs.touch()
                 st.rerun()
 

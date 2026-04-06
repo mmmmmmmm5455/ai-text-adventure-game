@@ -17,6 +17,9 @@ from game.quest_system import Quest, QuestKind
 
 MAX_DYNAMIC_NPCS = 3
 
+# 与 AIDialogueEngine 配合：session.npc_id == f"{DYNAMIC_DIALOGUE_PREFIX}{record['id']}"
+DYNAMIC_DIALOGUE_PREFIX = "dyn:"
+
 RewardType = Literal["clue", "gold", "item", "stat", "hidden_plot"]
 Tier = Literal["common", "rare", "epic"]
 
@@ -132,6 +135,19 @@ def blueprint_to_record(bp: DynamicNpcBlueprint, tier: Tier) -> dict[str, Any]:
         "linked_blurb": None,
         "linked_npc_name": (bp.linked_npc_name or "").strip()[:48] or None,
     }
+
+
+def dynamic_dialogue_session_id(npc_record_id: str) -> str:
+    """生成自由对话用的 npc_id（与静态 NPC 的 story key 不冲突）。"""
+    return f"{DYNAMIC_DIALOGUE_PREFIX}{npc_record_id}"
+
+
+def find_dynamic_npc_for_dialogue(gs: GameState, session_npc_id: str) -> dict[str, Any] | None:
+    """由 DialogueSession.npc_id 解析当前仍存在的路人记录。"""
+    if not session_npc_id.startswith(DYNAMIC_DIALOGUE_PREFIX):
+        return None
+    rid = session_npc_id[len(DYNAMIC_DIALOGUE_PREFIX) :]
+    return next((n for n in gs.dynamic_npcs if n.get("id") == rid), None)
 
 
 def dynamic_npc_quest_id(npc_id: str) -> str:
