@@ -9,7 +9,7 @@
 | 項目 | 狀態 |
 |------|------|
 | `pytest tests`（預設不依賴 Ollama） | **132 passed, 1 skipped**（skipped：`streamlit.testing` 不可用時整頁煙霧） |
-| GitHub Actions | 多 Python 版本；已設 `PYTHONIOENCODING=utf-8` |
+| GitHub Actions | 多 Python 版本；`actions/checkout@v6`、`setup-python@v6`（Node 24）；已設 `PYTHONIOENCODING=utf-8` |
 
 ---
 
