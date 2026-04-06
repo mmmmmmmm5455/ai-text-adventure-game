@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     llm_cache_enabled: bool = Field(default=True, alias="LLM_CACHE_ENABLED")
     max_user_input_length: int = Field(default=2000, alias="MAX_USER_INPUT_LENGTH")
 
+    database_url: str | None = Field(default=None, alias="DATABASE_URL")
+
     data_dir: Path = Field(default_factory=lambda: _project_root() / "data")
     saves_dir: Path = Field(default_factory=lambda: _project_root() / "data" / "saves")
     logs_dir: Path = Field(default_factory=lambda: _project_root() / "data" / "logs")

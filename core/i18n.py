@@ -374,6 +374,18 @@ _T: dict[str, dict[str, str]] = {
     "archive.saved": {"zh": "已保存。", "en": "Saved."},
     "archive.no_file": {"zh": "存档文件不存在。", "en": "Save file does not exist."},
     "archive.loaded": {"zh": "已读取存档。", "en": "Save loaded."},
+    "archive.possession_expander": {"zh": "云快照池（奪舍 / 備份）", "en": "Cloud snapshot pool (possession / backup)"},
+    "archive.possession_hint": {
+        "zh": "需已在 PostgreSQL 建立帳戶並執行 `database/migrations/002_possession_pool.sql`；在此填寫你的 `player_id`（UUID），或用環境變量 `POSSESSION_PLAYER_ID`。",
+        "en": "Requires a DB user and `database/migrations/002_possession_pool.sql`; enter your `player_id` (UUID) or set `POSSESSION_PLAYER_ID`.",
+    },
+    "archive.possession_player_id": {"zh": "玩家 UUID（player_id）", "en": "Player UUID (player_id)"},
+    "archive.possession_last_words_llm": {"zh": "用本地模型生成一句遺言（較慢）", "en": "Generate last words with local LLM (slower)"},
+    "archive.possession_upload": {"zh": "上傳當前進度到快照池", "en": "Upload current progress to snapshot pool"},
+    "archive.possession_bad_uuid": {"zh": "無效的 UUID；請檢查 player_id 或 POSSESSION_PLAYER_ID。", "en": "Invalid UUID; check player_id or POSSESSION_PLAYER_ID."},
+    "archive.possession_failed": {"zh": "上傳失敗（資料庫或網路）。", "en": "Upload failed (database or network)."},
+    "archive.possession_uploaded": {"zh": "已上傳快照：`{snapshot_id}`", "en": "Uploaded snapshot: `{snapshot_id}`"},
+    "archive.possession_label_default": {"zh": "手動上傳", "en": "Manual upload"},
     "settings.title": {"zh": "设置", "en": "Settings"},
     "settings.caption": {
         "zh": "模型与地址通过环境变量或 `.env` 配置，修改后需重启应用。",
