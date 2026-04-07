@@ -94,6 +94,16 @@ class Player:
         """創角特質彙總效果（純資料，戰鬥等系統可自行讀取）。"""
         return self.trait_effects.get(key, default)
 
+    def get_trait_effect(self):
+        """获取完整的特质效果对象。
+
+        Returns:
+            TraitEffect 对象，包含所有特质的综合效果
+        """
+        from game.trait_effects import create_trait_effect
+
+        return create_trait_effect(self)
+
     @staticmethod
     def create(name: str, profession: Profession, gender: str = "未指定") -> "Player":
         """按职业创建角色并初始化属性。"""
@@ -114,6 +124,79 @@ class Player:
         )
         p.skills.extend(_default_skills(profession))
         return p
+
+    @staticmethod
+    def create_from_profile(profile: "CharacterProfile") -> "Player":
+        """从 CharacterProfile 创建 Player 对象。
+
+        Args:
+            profile: CharacterProfile 对象
+
+        Returns:
+            Player 对象
+        """
+        from game.character_creator import CharacterProfile as CP
+
+        # 验证 profile 类型
+        if not isinstance(profile, CP):
+            raise TypeError("profile 必须是 CharacterProfile 类型")
+
+        # 创建 Player 对象
+        p = Player(
+            name=profile.name.strip()[:32],
+            profession=profile.profession,
+            gender=profile.gender.strip()[:32] or "未指定",
+            level=profile.level,
+            xp=profile.xp,
+            gold=profile.gold,
+            hp=profile.hp,
+            max_hp=profile.max_hp,
+            mp=profile.mp,
+            max_mp=profile.max_mp,
+            strength=profile.strength,
+            intelligence=profile.intelligence,
+            agility=profile.agility,
+            charisma=profile.charisma,
+            perception=profile.perception,
+            endurance=profile.endurance,
+        )
+
+        # 设置特质
+        p.traits = [t.id for t in profile.positive_traits + profile.negative_traits]
+
+        # 设置背景
+        bg = profile.background
+        if bg:
+            p.background_id = bg.id
+            p.background_name = bg.name
+
+        # 设置特质效果
+        from game.character_creator import _merge_trait_effects
+        p.trait_effects = _merge_trait_effects(profile.positive_traits + profile.negative_traits)
+
+        return p
+
+    @staticmethod
+    def create_from_creator(creator: "CharacterCreator") -> "Player":
+        """从 CharacterCreator 对象创建 Player 对象。
+
+        这是最推荐的方式，因为 CharacterCreator 已经包含了所有角色信息。
+
+        Args:
+            creator: CharacterCreator 对象
+
+        Returns:
+            Player 对象
+        """
+        from game.character_creator import CharacterCreator as CC
+
+        # 验证 creator 类型
+        if not isinstance(creator, CC):
+            raise TypeError("creator 必须是 CharacterCreator 类型")
+
+        # 直接使用 CharacterCreator 的 build() 方法
+        # 不需要传入 profession，因为 CharacterCreator 内部已经有 profile
+        return creator.build()
 
     def is_alive(self) -> bool:
         return self.hp > 0
@@ -144,7 +227,14 @@ class Player:
         self.hp = max(0, self.hp - max(0, amount))
 
     def heal(self, amount: int) -> None:
-        self.hp = min(self.max_hp, self.hp + max(0, amount))
+        """治疗角色，应用特质效果加成。"""
+        base_amount = max(0, amount)
+
+        # 应用特质效果
+        trait_effect = self.get_trait_effect()
+        final_amount = trait_effect.apply_healing_effect(base_amount)
+
+        self.hp = min(self.max_hp, self.hp + int(final_amount))
 
     def restore_mp(self, amount: int) -> None:
         self.mp = min(self.max_mp, self.mp + max(0, amount))
@@ -190,11 +280,24 @@ class Player:
         """使用消耗品；成功返回 None，失败返回原因。"""
         if not self.inventory.has_item(item_id, 1):
             return t("player.err.no_item")
+
+        # 获取特质效果
+        trait_effect = self.get_trait_effect()
+
+        # 检查物品使用失败率
+        if trait_effect.item_use_failure_chance > 0:
+            import random
+            if random.random() < trait_effect.item_use_failure_chance:
+                return "物品使用失败！"
+
         # 简单规则：治疗药水恢复生命
         if item_id == "healing_potion":
-            self.heal(35)
+            base_heal = 35
+            final_heal = trait_effect.apply_consumable_effect(base_heal)
+            self.heal(int(final_heal))
             self.inventory.remove_item(item_id, 1)
             return None
+
         return t("player.err.cannot_use")
 
     def to_dict(self) -> dict[str, Any]:
@@ -276,6 +379,162 @@ class Player:
             skills=list(data.get("skills", [])),
         )
         return p
+
+    def get_profile(self) -> dict[str, Any]:
+        """获取角色档案信息，用于 UI 显示和奪舍系统。
+
+        Returns:
+            角色档案字典，包含：
+            - 基本信息：姓名、职业、性别、等级
+            - 属性信息：力量、智力、敏捷、魅力、感知、耐力
+            - 状态信息：HP、MP、经验值、金币
+            - 背景信息：背景ID、背景名称
+            - 特质信息：正面特质、负面特质
+            - 装备信息：武器、护甲
+            - 技能信息：技能列表
+            - 装备描述：装备的可视化描述
+        """
+        # 计算属性总和
+        stat_sum = (
+            self.strength + self.intelligence + self.agility +
+            self.charisma + self.perception + self.endurance
+        )
+
+        # 计算升级所需经验
+        xp_needed = xp_for_next_level(self.level)
+        xp_progress = f"{self.xp}/{xp_needed}"
+
+        # 装备描述
+        equipment_desc = self.visible_equipment_for_npc()
+
+        # 背景描述
+        background_desc = f"{self.background_name}" if self.background_name else "无"
+
+        # 特质分组
+        from game.character_creator import CharacterCreatorConfig
+        config = CharacterCreatorConfig.get_instance()
+
+        positive_trait_names = []
+        negative_trait_names = []
+
+        for trait_id in self.traits:
+            trait = config.get_trait(trait_id)
+            if trait:
+                if trait.is_positive:
+                    positive_trait_names.append(trait.name)
+                else:
+                    negative_trait_names.append(trait.name)
+
+        return {
+            # 基本信息
+            "basic": {
+                "name": self.name,
+                "profession": self.profession.value,
+                "gender": self.gender,
+                "level": self.level,
+            },
+            # 属性信息
+            "stats": {
+                "strength": self.strength,
+                "intelligence": self.intelligence,
+                "agility": self.agility,
+                "charisma": self.charisma,
+                "perception": self.perception,
+                "endurance": self.endurance,
+                "stat_sum": stat_sum,
+            },
+            # 状态信息
+            "status": {
+                "hp": self.hp,
+                "max_hp": self.max_hp,
+                "hp_percent": round(self.hp / self.max_hp * 100, 1) if self.max_hp > 0 else 0,
+                "mp": self.mp,
+                "max_mp": self.max_mp,
+                "mp_percent": round(self.mp / self.max_mp * 100, 1) if self.max_mp > 0 else 0,
+                "xp": self.xp,
+                "xp_needed": xp_needed,
+                "xp_progress": xp_progress,
+                "gold": self.gold,
+                "alive": self.is_alive(),
+            },
+            # 背景信息
+            "background": {
+                "id": self.background_id,
+                "name": self.background_name,
+                "description": background_desc,
+            },
+            # 特质信息
+            "traits": {
+                "positive": positive_trait_names,
+                "negative": negative_trait_names,
+                "all": self.traits,
+            },
+            # 装备信息
+            "equipment": {
+                "weapon_id": self.equipped_weapon_id,
+                "armor_id": self.equipped_armor_id,
+                "description": equipment_desc,
+            },
+            # 技能信息
+            "skills": {
+                "all": list(self.skills),
+                "count": len(self.skills),
+            },
+            # 背包信息
+            "inventory": {
+                "max_slots": self.inventory.max_slots,
+                "items_count": len(self.inventory.items),
+            },
+        }
+
+    def get_profile_summary(self) -> str:
+        """获取角色档案的文本摘要，用于快速预览。
+
+        Returns:
+            角色档案的 Markdown 格式字符串
+        """
+        profile = self.get_profile()
+
+        # 构建档案摘要
+        lines = [
+            f"## 🎭 {profile['basic']['name']} 的档案",
+            "",
+            "### 基本信息",
+            f"- **姓名：** {profile['basic']['name']}",
+            f"- **职业：** {profile['basic']['profession']}",
+            f"- **性别：** {profile['basic']['gender']}",
+            f"- **等级：** {profile['basic']['level']}",
+            "",
+            "### 状态",
+            f"- **HP：** {profile['status']['hp']}/{profile['status']['max_hp']} ({profile['status']['hp_percent']}%)",
+            f"- **MP：** {profile['status']['mp']}/{profile['status']['max_mp']} ({profile['status']['mp_percent']}%)",
+            f"- **经验：** {profile['status']['xp_progress']}",
+            f"- **金币：** {profile['status']['gold']}",
+            "",
+            "### 属性",
+            f"- **力量：** {profile['stats']['strength']}",
+            f"- **智力：** {profile['stats']['intelligence']}",
+            f"- **敏捷：** {profile['stats']['agility']}",
+            f"- **魅力：** {profile['stats']['charisma']}",
+            f"- **感知：** {profile['stats']['perception']}",
+            f"- **耐力：** {profile['stats']['endurance']}",
+            f"- **总和：** {profile['stats']['stat_sum']}",
+            "",
+            "### 背景",
+            f"- **背景：** {profile['background']['description']}",
+            "",
+            "### 特质",
+            f"- **正面特质：** {', '.join(profile['traits']['positive']) or '无'}",
+            f"- **负面特质：** {', '.join(profile['traits']['negative']) or '无'}",
+            "",
+            "### 装备",
+            f"- **装备：** {profile['equipment']['description']}",
+            "",
+            "### 技能",
+            f"- **技能：** {', '.join(profile['skills']['all']) or '无'}",
+        ]
+
+        return "\n".join(lines)
 
 
 def _default_skills(prof: Profession) -> list[str]:

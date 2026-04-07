@@ -1,5 +1,5 @@
 {
-  "_meta": { "version": "1.0.0", "description": "角色創建：背景與特質" },
+  "_meta": { "version": "2.0.0", "description": "角色創建：背景與特質（含效果定義）" },
   "rules": {
     "max_positive_traits": 2,
     "max_negative_traits": 2,
@@ -42,16 +42,95 @@
   ],
   "traits": {
     "positive": [
-      { "id": "iron_stomach", "name": "鐵胃", "description": "", "effects": {} },
-      { "id": "social_butterfly", "name": "社交花蝴蝶", "description": "", "effects": {} },
-      { "id": "first_aid_master", "name": "急救精通", "description": "", "effects": {} },
-      { "id": "calm_minded", "name": "冷靜", "description": "", "effects": {} },
-      { "id": "keen_eye", "name": "眼尖", "description": "", "effects": {} }
+      {
+        "id": "iron_stomach",
+        "name": "鐵胃",
+        "description": "對食物和毒素有強大的抵抗力，消耗品效果提升 20%。",
+        "effects": {
+          "consumable_bonus": 0.2,
+          "poison_resistance": 0.3,
+          "food_efficiency": 0.2
+        }
+      },
+      {
+        "id": "social_butterfly",
+        "name": "社交花蝴蝶",
+        "description": "擅長與人交際，NPC 好感度提升 50%，交涉成功率提升 30%。",
+        "effects": {
+          "charisma_bonus": 1,
+          "npc_affinity_bonus": 0.5,
+          "negotiation_bonus": 0.3,
+          "trade_discount": 0.1
+        }
+      },
+      {
+        "id": "first_aid_master",
+        "name": "急救精通",
+        "description": "精通急救技巧，治疗效果提升 40%，急救成功率提升 50%。",
+        "effects": {
+          "healing_bonus": 0.4,
+          "first_aid_success_bonus": 0.5,
+          "auto_heal_chance": 0.1,
+          "critical_heal_chance": 0.2
+        }
+      },
+      {
+        "id": "calm_minded",
+        "name": "冷靜",
+        "description": "心理素質強大，抗精神干擾，屬性不會因為情緒波動而降低。",
+        "effects": {
+          "mental_resistance": 0.5,
+          "fear_resistance": 0.5,
+          "attribute_stability": true,
+          "combat_focus_bonus": 0.2
+        }
+      },
+      {
+        "id": "keen_eye",
+        "name": "眼尖",
+        "description": "觀察力敏銳，發現隱藏物品的概率提升 40%，探索成功率提升 30%。",
+        "effects": {
+          "perception_bonus": 2,
+          "hidden_item_chance_bonus": 0.4,
+          "exploration_success_bonus": 0.3,
+          "trap_detection_bonus": 0.5
+        }
+      }
     ],
     "negative": [
-      { "id": "bad_sense_of_direction", "name": "路痴", "description": "", "effects": {} },
-      { "id": "night_blindness", "name": "夜盲", "description": "", "effects": {} },
-      { "id": "clumsy", "name": "笨手笨腳", "description": "", "effects": {} }
+      {
+        "id": "bad_sense_of_direction",
+        "name": "路痴",
+        "description": "方向感差，迷路概率提升 30%，移動時間增加 20%。",
+        "effects": {
+          "lost_chance_bonus": 0.3,
+          "movement_time_penalty": 0.2,
+          "navigation_failure_chance": 0.2,
+          "perception_penalty": -1
+        }
+      },
+      {
+        "id": "night_blindness",
+        "name": "夜盲",
+        "description": "在夜間或昏暗環境下感知降低 40%，夜間探索成功率降低 30%。",
+        "effects": {
+          "night_perception_penalty": -4,
+          "night_exploration_penalty": -0.3,
+          "night_combat_penalty": -0.2,
+          "darkness_vulnerability": true
+        }
+      },
+      {
+        "id": "clumsy",
+        "name": "笨手笨腳",
+        "description": "動作笨拙，敏捷降低 2，物品使用失敗率提升 15%。",
+        "effects": {
+          "agility_penalty": -2,
+          "item_use_failure_chance": 0.15,
+          "stealth_failure_chance": 0.2,
+          "dodge_penalty": -0.2
+        }
+      }
     ]
   }
 }

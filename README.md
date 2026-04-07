@@ -7,12 +7,29 @@
 - **探索模式**：场景描写（LangGraph 组织单次生成）、移动、搜寻、休息、结局判定  
 - **对话模式**：与 NPC 聊天，好感度与记忆片段  
 - **存档**：`data/saves/slot1.json`  
-- **离线降级**：Ollama 不可用时使用规则化叙事，保证可演示  
+- **离线降级**：Ollama 不可用时使用规则化叙事，保证可演示
+
+## 数据库系统
+
+- **奪舍系统**：PostgreSQL 数据库存储角色快照，支持奪舍功能
+- **存档管理**：数据库化存档，多存档位支持
+- **配置要求**：PostgreSQL 11+，可选依赖（无数据库时游戏仍可运行）
+
+**配置方法：**  
+1. 安装 PostgreSQL  
+2. 创建数据库和用户  
+3. 配置 .env 文件  
+4. 运行 `python tools/init_database.py`
+
+**详细指南：** `docs/POSTGRESQL_SETUP_GUIDE.md`
+
+**离线模式：** 无数据库时游戏仍可运行，但奪舍功能不可用。
 
 ## 环境要求
 
-- Python 3.9+（已在 3.13 下测试）  
-- [Ollama](https://ollama.com/)（可选但强烈推荐）  
+- Python 3.9+（已在 3.13 下测试）
+- [Ollama](https://ollama.com/)（可选但强烈推荐）
+- PostgreSQL 11+（可选，用于奪舍系统）
 
 ## 快速开始
 
@@ -23,8 +40,35 @@ python -m venv .venv
 pip install -r requirements.txt
 copy .env.example .env
 ollama pull llama3
-ollama pull nomic-embed-text
+ollama pull nomic-embed_text
 ```
+
+### 数据库配置（可选，奪舍系统需要）
+
+```powershell
+# 1. 安装 PostgreSQL
+# Windows: 下载并运行 PostgreSQL Installer
+# macOS: brew install postgresql
+# Linux: sudo apt-get install postgresql postgresql-contrib
+
+# 2. 创建数据库和用户
+psql -U postgres
+CREATE DATABASE text_adventure;
+CREATE USER game_user WITH PASSWORD '你的密码';
+GRANT ALL PRIVILEGES ON DATABASE text_adventure TO game_user;
+\q
+
+# 3. 配置 .env 文件
+DATABASE_URL=postgresql://game_user:你的密码@127.0.0.1:5432/text_adventure
+
+# 4. 安装依赖
+pip install psycopg2-binary
+
+# 5. 初始化数据库
+python tools/init_database.py
+```
+
+**详细说明：** `docs/POSTGRESQL_SETUP_GUIDE.md`
 
 启动（Windows，**推荐**与 `start.bat` 一致）：
 

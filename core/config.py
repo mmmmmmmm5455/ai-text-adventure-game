@@ -29,8 +29,9 @@ class Settings(BaseSettings):
     ollama_base_url: str = Field(default="http://127.0.0.1:11434", alias="OLLAMA_BASE_URL")
     ollama_model: str = Field(default="llama3", alias="OLLAMA_MODEL")
     ollama_embed_model: str = Field(default="nomic-embed-text", alias="OLLAMA_EMBED_MODEL")
-    ollama_timeout: float = Field(default=120.0, alias="OLLAMA_TIMEOUT")
-    ollama_connect_timeout: float = Field(default=8.0, alias="OLLAMA_CONNECT_TIMEOUT")
+    # 性能优化：减少超时时间从 120秒 -> 15秒，8秒 -> 3秒
+    ollama_timeout: float = Field(default=15.0, alias="OLLAMA_TIMEOUT")
+    ollama_connect_timeout: float = Field(default=3.0, alias="OLLAMA_CONNECT_TIMEOUT")
     llm_cache_enabled: bool = Field(default=True, alias="LLM_CACHE_ENABLED")
     max_user_input_length: int = Field(default=2000, alias="MAX_USER_INPUT_LENGTH")
 

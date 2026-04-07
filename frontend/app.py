@@ -174,16 +174,26 @@ def main() -> None:
         if st.session_state.ui_mode == "home" or gs is None:
             st.markdown(f"### {get_world_name()}")
             st.write(get_world_lore())
-            name, prof, gender = render_home()
-            if name and prof and gender:
+            
+            # 使用新的角色创建 UI
+            from frontend.screen.character_creation import render_character_creation_ui
+            
+            player = render_character_creation_ui()
+            if player:
                 with st.spinner(t("app.init_world")):
-                    ngs = new_game_state(name, prof, gender)
+                    # 创建游戏状态
+                    ngs = new_game_state(player.name, player.profession, player.gender)
                     grant_starting_items(ngs)
+                    
+                    # 替换玩家为创建的角色
+                    ngs.player = player
+                    
                     try:
                         ok = engine.llm.health_check()
                         st.session_state.ollama_ok = ok
                     except Exception:
                         st.session_state.ollama_ok = False
+                    
                     txt = engine.generate_scene_description(ngs)
                     ngs.add_log(t("app.adventure_begins"))
                     st.session_state.game_state = ngs
