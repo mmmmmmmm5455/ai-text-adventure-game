@@ -188,6 +188,11 @@ class CharacterCreatorConfig:
         return cls._instance
 
     @classmethod
+    def load(cls) -> CharacterCreatorConfig:
+        """向后兼容旧 UI：等价于 get_instance()."""
+        return cls.get_instance()
+
+    @classmethod
     def _reset_instance_for_tests(cls) -> None:
         cls._instance = None
 
@@ -277,21 +282,47 @@ class CharacterCreator:
         return self
 
     def add_trait(self, tid: str, *, positive: bool = True) -> CharacterCreator:
-        pool = self.config._positive_traits if positive else self.config._negative_traits
-        current = self.profile.positive_traits if positive else self.profile.negative_traits
-        opposite = self.profile.negative_traits if positive else self.profile.positive_traits
-        limit = self.config._max_pos if positive else self.config._max_neg
+        key = str(tid).strip()
+        pos_pool = self.config._positive_traits
+        neg_pool = self.config._negative_traits
 
-        if tid not in pool:
-            raise ValueError(f"無效的特質ID: {tid}")
-        if any(t.id == tid for t in current):
-            raise ValueError(f"特質已存在: {pool[tid].name}")
+        def _find_by_name(pool: dict[str, Trait], name: str) -> Trait | None:
+            for tr in pool.values():
+                if tr.name == name:
+                    return tr
+            return None
+
+        trait: Trait | None = None
+        trait_positive = positive
+
+        # 先按调用方期待的正负面查找（支持 id 与 name）
+        if positive:
+            trait = pos_pool.get(key) or _find_by_name(pos_pool, key)
+        else:
+            trait = neg_pool.get(key) or _find_by_name(neg_pool, key)
+
+        # 若未找到，自动在另一侧查找（兼容 UI 只传 name 且不带 positive）
+        if trait is None:
+            other = (neg_pool, False) if positive else (pos_pool, True)
+            trait = other[0].get(key) or _find_by_name(other[0], key)
+            if trait is not None:
+                trait_positive = other[1]
+
+        if trait is None:
+            raise ValueError(f"無效的特質ID/名稱: {tid}")
+
+        current = self.profile.positive_traits if trait_positive else self.profile.negative_traits
+        opposite = self.profile.negative_traits if trait_positive else self.profile.positive_traits
+        limit = self.config._max_pos if trait_positive else self.config._max_neg
+
+        if any(t.id == trait.id for t in current):
+            raise ValueError(f"特質已存在: {trait.name}")
         if len(current) >= limit:
-            raise ValueError(f"{'正面' if positive else '負面'}特質已達上限")
-        if any(t.id == tid for t in opposite):
-            raise ValueError(f"無法同時擁有正反兩種「{pool[tid].name}」")
+            raise ValueError(f"{'正面' if trait_positive else '負面'}特質已達上限")
+        if any(t.id == trait.id for t in opposite):
+            raise ValueError(f"無法同時擁有正反兩種「{trait.name}」")
 
-        current.append(pool[tid])
+        current.append(trait)
         return self
 
     def add_recommended_traits(self, bg: Background) -> CharacterCreator:

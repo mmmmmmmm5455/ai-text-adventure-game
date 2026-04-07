@@ -91,7 +91,6 @@ def render_character_creation_ui() -> Player | None:
             value=st.session_state.char_name,
             key="char_name"
         )
-        st.session_state.char_name = name
 
         gender = st.selectbox(
             "性别",
@@ -99,7 +98,6 @@ def render_character_creation_ui() -> Player | None:
             index=["男", "女"].index(st.session_state.char_gender) if st.session_state.char_gender in ["男", "女"] else 0,
             key="char_gender"
         )
-        st.session_state.char_gender = gender
 
         profession = st.selectbox(
             "职业",
@@ -107,7 +105,6 @@ def render_character_creation_ui() -> Player | None:
             index=["战士", "法师", "盗贼", "吟游诗人"].index(st.session_state.char_profession) if st.session_state.char_profession in ["战士", "法师", "盗贼", "吟游诗人"] else 0,
             key="char_profession"
         )
-        st.session_state.char_profession = profession
 
         st.markdown("---")
 
@@ -351,7 +348,7 @@ def render_character_creation_ui() -> Player | None:
                 creator.distribute_stats({
                     "str": strength,
                     "int": intelligence,
-                    "agi": agility,
+                    "agl": agility,
                     "cha": charisma,
                     "per": perception,
                     "end": endurance,

@@ -266,6 +266,12 @@ def main() -> None:
             return
 
         st.subheader(t("app.explore_title"))
+        # 若之前判定离线，进入探索页时自动重试一次，避免状态长期卡在 False。
+        if st.session_state.ollama_ok is not True:
+            try:
+                st.session_state.ollama_ok = engine.llm.health_check()
+            except Exception:
+                st.session_state.ollama_ok = False
         if st.session_state.ollama_ok is False:
             st.info(t("app.ollama_offline"))
 
